@@ -1,0 +1,51 @@
+# Copyright 2024 Yaroshenko Dmytro (https://github.com/o-murphy)
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "py-aiowialon"
+
+readme = 'README.md'
+authors = [
+    { name="o-murphy", email="thehelixpg@gmail.com" },
+]
+description = "Async Wialon Remote API wrapper for Python 3"
+requires-python = ">=3.9"
+keywords = ["async", "wialon", "wialon remote api", "gurtam"]
+license = {file = "LICENSE"}
+classifiers = [
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+
+dependencies = ["aiohttp", "simplejson"]
+
+dynamic = ["version"]
+
+[project.urls]
+"Homepage" = "https://github.com/o-murphy/py-aiowialon"
+"Bug Reports" = "https://github.com/o-murphy/py-aiowialon/issues"
+"Source" = "https://github.com/o-murphy/py-aiowialon"
+
+[tool.setuptools]
+py-modules = ["aiowialon"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["aiowialon*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "aiowialon.__version__"}
