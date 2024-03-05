@@ -9,9 +9,17 @@ assert Wialon
 assert WialonError
 
 __author__ = "o-murphy"
-__copyright__ = ("Copyright 2013-2016, Gurtam; ",)
+__copyright__ = (
+    "Copyright 2013-2016, Gurtam; ",
+    "Copyright 2022 Dmytro Yaroshenko; "
+)
 
-__credits__ = ["Alex Chernetsky", "Aleksey Shmigelski", "Mike Turchunovich"]
-__version__ = "1.2.4"
+__credits__ = [
+    "Alex Chernetsky",
+    "Aleksey Shmigelski",
+    "Mike Turchunovich",
+    "Dmytro Yaroshenko",
+]
+__version__ = "1.2.5"
 
 __all__ = ["Wialon"]
