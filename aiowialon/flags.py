@@ -18,6 +18,7 @@ ITEM_DATAFLAG_GUID = 0x00000040
 # Admin fields plugin
 ITEM_DATAFLAG_ADMINFIELDS = 0x00000080
 
+""" Item ACL flags """
 # User has at least view access to given item
 ITEM_ACCESSFLAG_VIEW = 0x1
 # User can view detailed item properties
@@ -115,10 +116,6 @@ ITEM_UNIT_DATAFLAG_POS = 0x00400000
 #
 ITEM_USER_USERFLAG_CAN_CREATE_ITEMS = 0x00000004
 # TODO
-
-""" Item ACL flags """
-# User has at least view access to given item
-ITEM_ACCESSFLAG_VIEW = 0x1
 
 """ Resource ACL flags """
 # View notification
