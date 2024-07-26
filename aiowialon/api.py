@@ -98,6 +98,9 @@ class Wialon(object):
             raise RuntimeError("Wialon Polling Task already stopped")
 
     async def poling(self, token: str = None, timeout: [float, int] = 2) -> None:
+        if timeout < 1:
+            raise ValueError("Poling timeout have to be >= 1 second. "
+                             "No more than 10 “poling” - requests can be processed during 10 seconds")
         await self.token_login(token=token)
         while self.sid:
             response = await self.avl_evts()
@@ -116,17 +119,17 @@ class Wialon(object):
 
         return await self.request('avl_evts', url, params)
 
-    async def call(self, action_name, *argc, **kwargs):
+    async def call(self, action_name, *args, **kwargs):
         """
         Call the API method provided with the parameters supplied.
         """
 
         if not kwargs:
             # List params for batch
-            if isinstance(argc, tuple) and len(argc) == 1:
-                params = json.dumps(argc[0], ensure_ascii=False)
+            if isinstance(args, tuple) and len(args) == 1:
+                params = json.dumps(args[0], ensure_ascii=False)
             else:
-                params = json.dumps(argc, ensure_ascii=False)
+                params = json.dumps(args, ensure_ascii=False)
         else:
             params = json.dumps(kwargs, ensure_ascii=False)
 
