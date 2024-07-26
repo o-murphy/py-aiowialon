@@ -1,28 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-try:
-    from builtins import str
-except:
-    str = lambda x: "%s" % x
-
-try:
-    import simplejson as json
-    assert json  # Silence potential warnings from static analysis tools
-except ImportError:
-    import json
-
-from urllib.parse import urljoin
 import asyncio
-
-
-try:
-    import aiohttp
-    from aiohttp.client_exceptions import *
-except ImportError:
-    import aiohttp
-
+import json
 from typing import Callable, Coroutine
+from urllib.parse import urljoin
+
+import aiohttp
+from aiohttp.client_exceptions import ClientResponseError, ClientConnectorError
 
 
 class WialonError(Exception):
@@ -94,6 +79,8 @@ class Wialon(object):
 
         self.__base_api_url = urljoin(self.__base_url, 'wialon/ajax.html?')
 
+        self.__task = None
+
     @property
     def sid(self):
         return self._sid
@@ -125,7 +112,13 @@ class Wialon(object):
     def start_poling(self, token=None, timeout=2):
         if token:
             self.token = token
-        asyncio.run(self.poling(self.token, timeout))
+        if not self.__task:
+            asyncio.create_task(self.poling(self.token, timeout))
+
+    def stop_poling(self):
+        if self.__task:
+            self.__task.cancel()
+            self.__task = None
 
     async def poling(self, token=None, timeout=2):
         await self.token_login(token=token)
@@ -228,6 +221,7 @@ class Wialon(object):
         Enable the calling of Wialon API methods through Python method calls
         of the same name.
         """
+
         def get(_self, *args, **kwargs):
             return self.call(action_name, *args, **kwargs)
 
@@ -292,11 +286,11 @@ if __name__ == '__main__':
             pass
 
 
-    def run():
+    async def run():
         """
         Poling example
         """
-        from aiowialon import flags
+        from aiowialon.types import flags
 
         wialon_session = Wialon(host='TEST HOST', token='TEST TOKEN')
 
@@ -316,7 +310,7 @@ if __name__ == '__main__':
                     {
                         "type": "col",
                         "data": ids,
-                        "flags": flags.ITEM_DATAFLAG_BASE + flags.ITEM_UNIT_DATAFLAG_POS,
+                        "flags": flags.UnitsDataFlag.BASE + flags.UnitsDataFlag.POS,
                         "mode": 0
                     }
                 ]
@@ -343,4 +337,5 @@ if __name__ == '__main__':
         wialon_session.session_did_open(callback=session_did_open)
         wialon_session.start_poling()
 
-    run()
+
+    asyncio.run(run())

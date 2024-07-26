@@ -1,4 +1,108 @@
-from enum import IntFlag
+from enum import IntFlag, StrEnum
+
+
+class ItemType(StrEnum):
+    AVL_HW = 'avl_hw'
+    AVL_RESOURCE = 'avl_resource'
+    AVL_RETRANSLATOR = 'avl_retranslator'
+    AVL_UNIT = 'avl_unit'
+    AVL_UNIT_GROUP = 'avl_unit_group'
+    USER = 'user'
+    AVL_ROUTE = 'avl_route'
+
+
+class ItemProp(StrEnum):
+    SYS_NAME = "sys_name"  # item name;
+    SYS_ID = "sys_id"  # item ID;
+    SYS_UNIQUE_ID = "sys_unique_id"  # unique unit ID (IMEI);
+    SYS_PHONE_NUMBER = "sys_phone_number"  # unit phone number;
+    SYS_PHONE_NUMBER2 = "sys_phone_number2"  # unit second phone number;
+    SYS_USER_CREATOR = "sys_user_creator"  # creator ID;
+    REL_USER_CREATOR_NAME = "rel_user_creator_name"  # creator name;
+    SYS_BILLING_ACCOUNT_GUID = "sys_billing_account_guid"  # account ID;
+    REL_BILLING_ACCOUNT_NAME = "rel_billing_account_name"  # account name;
+    REL_BILLING_PARENT_ACCOUNT_NAME = "rel_billing_parent_account_name"  # parent account name;
+    REL_BILLING_PLAN_NAME = "rel_billing_plan_name"  # billing plan name;
+    SYS_COMM_STATE = "sys_comm_state"  # hardware state (1 = "1" #  enabled, 0 = "0" #  disabled);
+    REL_HW_TYPE_NAME = "rel_hw_type_name"  # hardware name;
+    REL_HW_TYPE_ID = "rel_hw_type_id"  # hardware ID;
+    SYS_ACCOUNT_BALANCE = "sys_account_balance"  # account balance;
+    SYS_ACCOUNT_DAYS = "sys_account_days"  # account days;
+    SYS_ACCOUNT_ENABLE_PARENT = "sys_account_enable_parent"  # dealer rights (1 = "1" #  on, 0 = "0" #  off);
+    SYS_ACCOUNT_DISABLED = "sys_account_disabled"  # account blocked (1 = "1" #  blocked);
+    # last modification time for sys_account_disabled, UNIX-time;
+    REL_ACCOUNT_DISABLED_MOD_TIME = "rel_account_disabled_mod_time"
+    REL_ACCOUNT_UNITS_USAGE = "rel_account_units_usage"  # number of units used in account;
+    REL_LAST_MSG_DATE = "rel_last_msg_date"  # last message time, UNIX-time;
+    REL_IS_ACCOUNT = "rel_is_account"  # whether resource is account (1 = "1" #  yes, 0 = "0" #  no);
+    LOGIN_DATE = "login_date"  # last login time, UNIX-time;
+    RETRANSLATOR_ENABLED = "retranslator_enabled"  # whether retranslator enabled ( 1 = "1" #  yes, 0 = "0" #  no);
+    REL_CREATION_TIME = "rel_creation_time"  # creation time;
+    REL_GROUP_UNIT_COUNT = "rel_group_unit_count"  # the number of units in a group;
+    REL_CUSTOM_FIELD_NAME = "rel_customfield_name"  # the name of unit custom field;
+    REL_CUSTOM_FIELD_VALUE = "rel_customfield_value"  # the value of unit custom field;
+    PROFILE_FIELD = "profilefield"  # the unit profile field (value);
+    REL_PROFILE_FIELD_NAME = "rel_profilefield_name"  # the name of unit profile field;
+    REL_PROFILE_FIELD_VALUE = "rel_profilefield_value"  # the value of unit profile field;
+    REL_ADMIN_FIELD_NAME = "rel_adminfield_name"  # the name of unit admin field;
+    REL_ADMIN_FIELD_VALUE = "rel_adminfield_value"  # the value of unit admin field;
+    # the name and value of unit custom field, separated by “:”;
+    REL_CUSTOM_FIELD_NAME_VALUE = "rel_customfield_name_value"
+    # the name and value of unit profile field, separated by “:”;
+    REL_PROFILE_FIELD_NAME_VALUE = "rel_profilefield_name_value"
+    # the name and value of unit admin field, separated by “:”.
+    REL_ADMIN_FIELD_NAME_VALUE = "rel_adminfield_name_value"
+
+
+class ItemPropType(StrEnum):
+    PROPERTY = "property"
+    LIST = 'list'
+    PROP_ITEM_NAME = 'propitemname'
+    CREATOR_TREE = 'creatortree'
+    ACCOUNT_TREE = 'accounttree'
+    CUSTOM_FIELD = 'customfield'
+    PROFILE_FIELD = 'profilefield'
+    ADMIN_FIELD = 'adminfield'
+    _REL_PROFILE_FIELD_NAME_VALUE = "rel_profilefield_name_value"
+
+
+class AvlUnitSubItem(StrEnum):
+    UNIT_SENSORS = "unit_sensors"
+    UNIT_COMMANDS = "unit_commands"
+    SERVICE_INTERVALS = "service_intervals"
+
+    CUSTOM_FIELDS = "custom_fields"
+    ADMIN_FIELDS = "admin_fields"
+
+
+class AvlResourceSubItem(StrEnum):
+    DRIVERS = "drivers"
+    DRIVER_GROUPS = "driver_groups"
+    JOBS = "jobs"
+    NOTIFICATIONS = "notifications"
+    POIS = "pois"
+    TRAILERS = "trailers"
+    TRAILER_GROUPS = "trailer_groups"
+    ZONES_LIBRARY = "zones_library"
+    REPORT_TEMPLATES = "report_templates"
+    ORDERS = "orders"
+
+    CUSTOM_FIELDS = "custom_fields"
+    ADMIN_FIELDS = "admin_fields"
+
+
+class AvlRouteSubItem(StrEnum):
+    ROUNDS = "rounds"
+    ROUTE_SCHEDULES = "route_schedules"
+
+
+class AvlRetranslatorSubItem(StrEnum):
+    RETRANSLATOR_UNITS = "retranslator_units"
+
+
+class AvlUserSubItem(StrEnum):
+    CUSTOM_FIELDS = "custom_fields"
+    ADMIN_FIELDS = "admin_fields"
 
 
 class ItemDataFlag(IntFlag):
@@ -10,7 +114,7 @@ class ItemDataFlag(IntFlag):
     BILLING_PROPS = 0x00000004
     # Item custom fields
     CUSTOM_FIELDS = 0x00000008
-    # Item image 
+    # Item image
     IMAGE = 0x00000010
     # Item messages
     MSGS = 0x00000020
@@ -61,7 +165,7 @@ class UnitGroupsDataFlag(IntFlag):
     ALL = ItemDataFlag.ALL
 
 
-class UsersDataFlag(IntFlag):
+class UserDataFlag(IntFlag):
     BASE = ItemDataFlag.BASE
     CUSTOM_PROPS = ItemDataFlag.CUSTOM_PROPS
     BILLING_PROPS = ItemDataFlag.BILLING_PROPS
@@ -77,7 +181,7 @@ class UsersDataFlag(IntFlag):
     NOTIFS = 0x00000200  # 512, notifications
 
 
-class ResourcesDataFlag(IntFlag):
+class ResourceDataFlag(IntFlag):
     BASE = ItemDataFlag.BASE
     CUSTOM_PROPS = ItemDataFlag.CUSTOM_PROPS
     BILLING_PROPS = ItemDataFlag.BILLING_PROPS
@@ -107,7 +211,7 @@ class ResourcesDataFlag(IntFlag):
     TAGS_GROUPS = 0x00800000  # 8388608, tags groups(passengers)
 
 
-class RoutesDataFlag(IntFlag):
+class RouteDataFlag(IntFlag):
     BASE = ItemDataFlag.BASE
     CUSTOM_PROPS = ItemDataFlag.CUSTOM_PROPS
     BILLING_PROPS = ItemDataFlag.BILLING_PROPS
@@ -125,7 +229,7 @@ class RoutesDataFlag(IntFlag):
     ROUNDS = 0x00000800  # 2048, rounds
 
 
-class RetranslatorsDataFlag(IntFlag):
+class RetranslatorDataFlag(IntFlag):
     BASE = ItemDataFlag.BASE
     CUSTOM_PROPS = ItemDataFlag.CUSTOM_PROPS
     BILLING_PROPS = ItemDataFlag.BILLING_PROPS
@@ -172,7 +276,8 @@ class MessagesWithDataFlags(IntFlag):
     HAS_OUTPUT_DATA = 0x04  # 4, output data information is available
     HAS_STATE_INFO = 0x08  # 8, state information is available
     HAS_ALARM_BIT = 0x10  # 16, message contains alarm bit
-    HAS_AVL_DRIVER_CODE = 0x20  # 32, message contains information about driver code which come only in parameter avl_driver
+    # 32, message contains information about driver code which come only in parameter avl_driver
+    HAS_AVL_DRIVER_CODE = 0x20
     WAS_CORRECTED_BY_LBS = 0x20000  # 131072, message was corrected by lbs
     HAS_WIFI_POS = 0x80000  # 524288, message contains wi-fi position
 
@@ -206,13 +311,15 @@ class AccessControlFlags(IntFlag):
 
     # UnitsAndGroups
 
-    EDIT_CONNECT_SETTINGS = 0x0000100000  # Edit connectivity settings (device type, UID, phone, access password, messages filter)
+    # # Edit connectivity settings (device type, UID, phone, access password, messages filter)
+    EDIT_CONNECT_SETTINGS = 0x0000100000
     CRUD_SENSORS = 0x0000200000  # Create, edit, and delete sensors
     EDIT_COUNTERS = 0x0000400000  # Edit counters
     DEL_MSGS = 0x0000800000  # Delete messages
     EXECUTE_CMDS = 0x0001000000  # Execute commands
     REGISTER_EVENTS = 0x0002000000  # Register events
-    VIEW_CONNECT_SETTINGS = 0x0004000000  # View connectivity settings (device type, UID, phone, access password, messages filter)
+    # # View connectivity settings (device type, UID, phone, access password, messages filter)
+    VIEW_CONNECT_SETTINGS = 0x0004000000
     VIEW_SERVICE_INTERVALS = 0x0010000000  # View service intervals
     CRUD_SERVICE_INTERVALS = 0x0020000000  # Create, edit, and delete service intervals
     IMPORT_MSGS = 0x0040000000  # Import messages
@@ -220,7 +327,8 @@ class AccessControlFlags(IntFlag):
     VIEW_CMDS = 0x0400000000  # View commands
     CRUD_CMDS = 0x0800000000  # Create, edit, and delete commands
     EDIT_TRIP_DETECTOR_N_FUEL_CONSUMPTION = 0x4000000000  # Edit trip detector and fuel consumption
-    USE_UNIT_IN_JOBS_NOTIFS_ROUTES_RETRANSLATORS = 0x8000000000  # Use unit in jobs, notifications, routes, retranslators
+    # # Use unit in jobs, notifications, routes, retranslators
+    USE_UNIT_IN_JOBS_NOTIFS_ROUTES_RETRANSLATORS = 0x8000000000
 
     # Users
     MANAGE_USER_ACCESS_RIGHTS = 0x100000  # Manage user`s access rights
@@ -350,7 +458,8 @@ class TokenFlag(IntFlag):
     EDIT_ADMIN_FIELDS = 8192  # 0x2000, Edit administrative fields
 
     # # Units and unit groups
-    EDIT_CONNECT_SETTINGS = 1048576  # 0x100000, Edit connectivity settings (device type, UID, phone, access password, messages filter)
+    # # 0x100000, Edit connectivity settings (device type, UID, phone, access password, messages filter)
+    EDIT_CONNECT_SETTINGS = 1048576
     CRUD_SENSORS = 2097152  # 0x200000, Create, edit, and delete sensors
     EDIT_COUNTERS = 4194304  # 0x400000, Edit counters
     DEL_MSGS = 8388608  # 0x800000, Delete messages
@@ -360,51 +469,51 @@ class TokenFlag(IntFlag):
     # Communication (Units and unit groups)
     EXECUTE_CMDS = 16777216  # 0x1000000, Execute commands
 
-    # Unlimited operation as authorizated user
+    # Unlimited operation as authorized user
     EDIT_ACL_PROPAGATED_ITEMS = 1024  # 0x400, Edit ACL propagated items
     VIEW_ROUTES = 67108864  # 0x4000000, View routes
     CRUD_ROUTES = 134217728  # 0x8000000, Create, edit, delete routes
     VIEW_EVENTS = 68719476736  # 0x1000000000, View events
     CRUD_EVENTS = 137438953472  # 0x2000000000, Create, edit, and delete events
-    USE_UNIT_IN_JOBS_NOTIFS_ROUTES_RETRANSLATORS = 549755813888  # 0x8000000000, Use unit in jobs, notifications, routes, retranslators
+    # # 0x8000000000, Use unit in jobs, notifications, routes, retranslators
+    USE_UNIT_IN_JOBS_NOTIFS_ROUTES_RETRANSLATORS = 549755813888
     MANAGE_ACCOUNT = 4294967296  # 0x100000000, Manage account
 
-
-if __name__ == '__main__':
-    # EXAMPLE
-    def convert_api_description_to_enums():
-        import re
-
-        api_description = """
-        General
-        Edit ACL propagated items	0x400	1024
-        Units and unit groups
-        View routes	0x4000000	67108864
-        Create, edit, delete routes	0x8000000	134217728
-        View events	0x1000000000	68719476736
-        Create, edit, and delete events	0x2000000000	137438953472
-        Use unit in jobs, notifications, routes, retranslators	0x8000000000	549755813888
-        Resources (Accounts)
-        Manage account	0x100000000	4294967296
-        """
-
-        # pattern = r"(0x[0-9a-f]+)\s+(\d+)\s+(.+)"
-
-        # for i in re.findall(pattern, api_description):
-        #     value, intvalue, desc = i
-        #     print(f"\t{desc.upper().replace(' ', '_')} = {value}  # {intvalue}, {desc}")
-
-        # pattern = r"(0x[0-9a-f]+)\s+(.+)"
-        #
-        # for i in re.findall(pattern, api_description):
-        #     value, desc = i
-        #     print(f"\t{desc.upper().replace(' ', '_')} = {value}  # {desc}")
-
-        pattern = r"(.+)\s+(0x[0-9a-f]+)\s+(\d+)"
-
-        for i in re.findall(pattern, api_description):
-            desc, value, decval = i
-            print(f"\t{desc.upper().replace(' ', '_')} = {decval}  # {value}, {desc}")
-
-
-    convert_api_description_to_enums()
+# if __name__ == '__main__':
+#     # EXAMPLE
+#     def convert_api_description_to_enums():
+#         import re
+#
+#         api_description = """
+#         General
+#         Edit ACL propagated items	0x400	1024
+#         Units and unit groups
+#         View routes	0x4000000	67108864
+#         Create, edit, delete routes	0x8000000	134217728
+#         View events	0x1000000000	68719476736
+#         Create, edit, and delete events	0x2000000000	137438953472
+#         Use unit in jobs, notifications, routes, retranslators	0x8000000000	549755813888
+#         Resources (Accounts)
+#         Manage account	0x100000000	4294967296
+#         """
+#
+#         # pattern = r"(0x[0-9a-f]+)\s+(\d+)\s+(.+)"
+#
+#         # for i in re.findall(pattern, api_description):
+#         #     value, intvalue, desc = i
+#         #     print(f"\t{desc.upper().replace(' ', '_')} = {value}  # {intvalue}, {desc}")
+#
+#         # pattern = r"(0x[0-9a-f]+)\s+(.+)"
+#         #
+#         # for i in re.findall(pattern, api_description):
+#         #     value, desc = i
+#         #     print(f"\t{desc.upper().replace(' ', '_')} = {value}  # {desc}")
+#
+#         pattern = r"(.+)\s+(0x[0-9a-f]+)\s+(\d+)"
+#
+#         for i in re.findall(pattern, api_description):
+#             desc, value, decval = i
+#             print(f"\t{desc.upper().replace(' ', '_')} = {decval}  # {value}, {desc}")
+#
+#
+#     convert_api_description_to_enums()

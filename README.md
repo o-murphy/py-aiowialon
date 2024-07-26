@@ -22,10 +22,10 @@ after `token_login` before `avl_evts` poling loop starts
 Start poling with `wialon_session.start_poling()` function 
 or `wialon_session.poling()` if you're want to run poling as a coroutine
 
-
 ```python
 import asyncio
-from aiowialon import Wialon, WialonEvents, WialonEvent, flags
+from aiowialon import Wialon, WialonEvents, WialonEvent
+from aiowialon.types import flags
 
 
 def run():
@@ -59,8 +59,8 @@ def run():
 
     @wialon_session.event_handler
     async def event_handler(events: WialonEvents):
-        if 116106 in events.data:
-            item_event: WialonEvent = events.data[116106]
+        if 116106 in events.events:
+            item_event: WialonEvent = events.events[116106]
             print(item_event.item, item_event.e_type, item_event.desc)
 
     @wialon_session.event_handler
@@ -75,8 +75,9 @@ def run():
         units = await wialon_session.core_search_items(spec=spec, force=1, flags=5, **interval)
         print(events.__dict__, units['totalItemsCount'])
 
-    wialon_session.session_did_open(callback=session_did_open)
+    wialon_session.on_session_open(callback=session_did_open)
     wialon_session.start_poling()
+
 
 run()
 
