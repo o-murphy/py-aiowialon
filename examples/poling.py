@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 from aiowialon.api import Wialon
 from aiowialon.types import flags
@@ -56,7 +57,10 @@ async def main():
     """
     wialon.session_did_open(callback=session_did_open)
     wialon.start_poling()
+    while True:
+        await asyncio.sleep(1)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+
