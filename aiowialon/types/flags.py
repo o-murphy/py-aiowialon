@@ -40,17 +40,17 @@ class ItemProp(StrEnum):
     REL_CREATION_TIME = "rel_creation_time"  # creation time;
     REL_GROUP_UNIT_COUNT = "rel_group_unit_count"  # the number of units in a group;
     REL_CUSTOM_FIELD_NAME = "rel_customfield_name"  # the name of unit custom field;
-    REL_CUSTOM_FIELD_VALUE = "rel_customfield_value"  # the value of unit custom field;
-    PROFILE_FIELD = "profilefield"  # the unit profile field (value);
+    REL_CUSTOM_FIELD_VALUE = "rel_customfield_value"  # the eid of unit custom field;
+    PROFILE_FIELD = "profilefield"  # the unit profile field (eid);
     REL_PROFILE_FIELD_NAME = "rel_profilefield_name"  # the name of unit profile field;
-    REL_PROFILE_FIELD_VALUE = "rel_profilefield_value"  # the value of unit profile field;
+    REL_PROFILE_FIELD_VALUE = "rel_profilefield_value"  # the eid of unit profile field;
     REL_ADMIN_FIELD_NAME = "rel_adminfield_name"  # the name of unit admin field;
-    REL_ADMIN_FIELD_VALUE = "rel_adminfield_value"  # the value of unit admin field;
-    # the name and value of unit custom field, separated by “:”;
+    REL_ADMIN_FIELD_VALUE = "rel_adminfield_value"  # the eid of unit admin field;
+    # the name and eid of unit custom field, separated by “:”;
     REL_CUSTOM_FIELD_NAME_VALUE = "rel_customfield_name_value"
-    # the name and value of unit profile field, separated by “:”;
+    # the name and eid of unit profile field, separated by “:”;
     REL_PROFILE_FIELD_NAME_VALUE = "rel_profilefield_name_value"
-    # the name and value of unit admin field, separated by “:”.
+    # the name and eid of unit admin field, separated by “:”.
     REL_ADMIN_FIELD_NAME_VALUE = "rel_adminfield_name_value"
 
 
@@ -500,20 +500,20 @@ class TokenFlag(IntFlag):
 #         # pattern = r"(0x[0-9a-f]+)\s+(\d+)\s+(.+)"
 #
 #         # for i in re.findall(pattern, api_description):
-#         #     value, intvalue, desc = i
-#         #     print(f"\t{desc.upper().replace(' ', '_')} = {value}  # {intvalue}, {desc}")
+#         #     eid, intvalue, desc = i
+#         #     print(f"\t{desc.upper().replace(' ', '_')} = {eid}  # {intvalue}, {desc}")
 #
 #         # pattern = r"(0x[0-9a-f]+)\s+(.+)"
 #         #
 #         # for i in re.findall(pattern, api_description):
-#         #     value, desc = i
-#         #     print(f"\t{desc.upper().replace(' ', '_')} = {value}  # {desc}")
+#         #     eid, desc = i
+#         #     print(f"\t{desc.upper().replace(' ', '_')} = {eid}  # {desc}")
 #
 #         pattern = r"(.+)\s+(0x[0-9a-f]+)\s+(\d+)"
 #
 #         for i in re.findall(pattern, api_description):
-#             desc, value, decval = i
-#             print(f"\t{desc.upper().replace(' ', '_')} = {decval}  # {value}, {desc}")
+#             desc, eid, decval = i
+#             print(f"\t{desc.upper().replace(' ', '_')} = {decval}  # {eid}, {desc}")
 #
 #
 #     convert_api_description_to_enums()

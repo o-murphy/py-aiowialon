@@ -22,12 +22,10 @@ class Wialon(object):
         """
         Created the Wialon API object.
         """
-        self._sid = sid
-        self._token = token
-        self.__default_params = {}
+        self._sid: str = sid
+        self._token: str = token
+        self.__default_params: Dict = {}
         self.__default_params.update(extra_params)
-        self.__handlers: Dict[str, AvlEventHandler] = {}
-        self.__on_session_open: Optional[Callable[[], Coroutine]] = None
 
         self.__base_url = (
             '{scheme}://{host}:{port}'.format(
@@ -37,40 +35,41 @@ class Wialon(object):
             )
         )
 
-        self.__base_api_url = urljoin(self.__base_url, 'wialon/ajax.html?')
+        self.__base_api_url: str = urljoin(self.__base_url, 'wialon/ajax.html?')
 
-        self.__task = None
+        self.__handlers: Dict[str, AvlEventHandler] = {}
+        self.__on_session_open: Optional[Callable[[], Coroutine]] = None
+        self.__task: Optional[asyncio.Task] = None
 
     @property
-    def sid(self):
+    def sid(self) -> str:
         return self._sid
 
     @sid.setter
-    def sid(self, value):
-        self._sid = value
+    def sid(self, eid: str) -> None:
+        self._sid = eid
 
     @property
-    def token(self):
+    def token(self) -> str:
         return self._token
 
     @token.setter
-    def token(self, value):
-        self._token = value
+    def token(self, token: str) -> None:
+        self._token = token
 
-    def update_extra_params(self, **params):
+    def update_extra_params(self, **params) -> None:
         """
         Updated the Wialon API default parameters.
         """
         self.__default_params.update(params)
 
-    def on_session_open(self, callback: Optional[Callable[[], Coroutine]] = None):
+    def on_session_open(self, callback: Optional[Callable[[], Coroutine]] = None) -> Callable:
         if callback and not callable(callback):
             raise TypeError("on_session_open callback must be callable")
         self.__on_session_open = callback
         return callback
 
-    def event_handler(self, filter_: AvlEventFilter = None):
-
+    def event_handler(self, filter_: AvlEventFilter = None) -> Callable:
         def decorator(callback: AvlEventHandler):
             handler = AvlEventHandler(callback, filter_)
             if callback.__name__ in self.__handlers:
@@ -80,25 +79,25 @@ class Wialon(object):
 
         return decorator
 
-    async def process_event_handlers(self, event: AvlEvent):
+    async def process_event_handlers(self, event: AvlEvent) -> None:
         for name, handler in self.__handlers.items():
             if await handler(event):
                 break
 
-    def start_poling(self, token=None, timeout=2):
+    def start_poling(self, token: str = None, timeout: [int, float] = 2) -> None:
         if not self.__task:
             asyncio.create_task(self.poling(token, timeout))
         else:
             raise RuntimeError("Wialon Polling Task already started")
 
-    def stop_poling(self):
+    def stop_poling(self) -> None:
         if self.__task:
             self.__task.cancel()
             self.__task = None
         else:
             raise RuntimeError("Wialon Polling Task already stopped")
 
-    async def poling(self, token=None, timeout=2):
+    async def poling(self, token: str = None, timeout: [float, int] = 2) -> None:
         await self.token_login(token=token)
         while self.sid:
             response = await self.avl_evts()
