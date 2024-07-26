@@ -1,14 +1,16 @@
 import asyncio
-import time
 
 from aiowialon.api import Wialon
 from aiowialon.types import flags
-from aiowialon.types.event import WialonEvents, WialonEvent
+from aiowialon.types.event import AvlEvent
 
-wialon = Wialon(host='TEST HOST', token='TEST TOKEN')
+# Wialon SDK playground token
+TEST_TOKEN = '5dce19710a5e26ab8b7b8986cb3c49e58C291791B7F0A7AEB8AFBFCEED7DC03BC48FF5F8'
+wialon = Wialon(token=TEST_TOKEN)
 
 
-async def session_did_open():
+@wialon.on_session_open
+async def register_avl_events():
     spec = {
         'itemsType': 'avl_unit',
         'propName': 'sys_name',
@@ -24,43 +26,26 @@ async def session_did_open():
             {
                 "type": "col",
                 "data": ids,
-                "flags": flags.UnitsDataFlag.BASE + flags.UnitsDataFlag.POS,
+                "flags": flags.UnitsDataFlag.BASE | flags.UnitsDataFlag.POS,
                 "mode": 0
             }
         ]
         await wialon.core_update_data_flags(spec=spec)
 
 
-@wialon.event_handler
-async def event_handler(events: WialonEvents):
-    if 116106 in events.data:
-        item_event: WialonEvent = events.data[116106]
-        print(item_event.item, item_event.e_type, item_event.desc)
-
-
-@wialon.event_handler
-async def event_handler(events: WialonEvents):
-    spec = {
-        'itemsType': 'avl_unit',
-        'propName': 'sys_name',
-        'propValueMask': '*',
-        'sortType': 'sys_name'
-    }
-    interval = {"from": 0, "to": 0}
-    units = await wialon.core_search_items(spec=spec, force=1, flags=5, **interval)
-    print(events.__dict__, units['totalItemsCount'])
+@wialon.event_handler(lambda event: True)
+async def unit_event(event: AvlEvent):
+    print("Handler got event:", event)
 
 
 async def main():
     """
     Poling example
     """
-    wialon.session_did_open(callback=session_did_open)
     wialon.start_poling()
     while True:
-        await asyncio.sleep(1)
+        await asyncio.sleep(3600)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-

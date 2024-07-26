@@ -3,14 +3,14 @@
 
 import asyncio
 import json
-from typing import Callable, Coroutine
+from typing import Callable, Coroutine, Dict, Optional
 from urllib.parse import urljoin
 
 import aiohttp
 from aiohttp.client_exceptions import ClientResponseError, ClientConnectorError
 
 from aiowialon.exceptions import WialonError
-from aiowialon.types.event import WialonEvents
+from aiowialon.types.event import AvlEventHandler, AvlEventFilter, AvlEvent
 
 
 class Wialon(object):
@@ -26,8 +26,8 @@ class Wialon(object):
         self._token = token
         self.__default_params = {}
         self.__default_params.update(extra_params)
-        self.__handlers = []
-        self._session_did_open = None
+        self.__handlers: Dict[str, AvlEventHandler] = {}
+        self.__on_session_open: Optional[Callable[[], Coroutine]] = None
 
         self.__base_url = (
             '{scheme}://{host}:{port}'.format(
@@ -57,34 +57,53 @@ class Wialon(object):
     def token(self, value):
         self._token = value
 
-    def session_did_open(self, callback: Callable[[], Coroutine]):
-        self._session_did_open = callback
-
     def update_extra_params(self, **params):
         """
         Updated the Wialon API default parameters.
         """
         self.__default_params.update(params)
 
-    def event_handler(self, callback: object):
-        self.__handlers.append(callback)
+    def on_session_open(self, callback: Optional[Callable[[], Coroutine]] = None):
+        if callback and not callable(callback):
+            raise TypeError("on_session_open callback must be callable")
+        self.__on_session_open = callback
+        return callback
+
+    def event_handler(self, filter_: AvlEventFilter = None):
+
+        def decorator(callback: AvlEventHandler):
+            handler = AvlEventHandler(callback, filter_)
+            if callback.__name__ in self.__handlers:
+                raise KeyError(f"Detected EventHandler duplicate {callback.__name__}")
+            self.__handlers[callback.__name__] = handler
+            return callback
+
+        return decorator
+
+    async def process_event_handlers(self, event: AvlEvent):
+        for name, handler in self.__handlers.items():
+            if await handler(event):
+                break
 
     def start_poling(self, token=None, timeout=2):
-        if token:
-            self.token = token
         if not self.__task:
-            asyncio.create_task(self.poling(self.token, timeout))
+            asyncio.create_task(self.poling(token, timeout))
+        else:
+            raise RuntimeError("Wialon Polling Task already started")
 
     def stop_poling(self):
         if self.__task:
             self.__task.cancel()
             self.__task = None
+        else:
+            raise RuntimeError("Wialon Polling Task already stopped")
 
     async def poling(self, token=None, timeout=2):
         await self.token_login(token=token)
         while self.sid:
             response = await self.avl_evts()
-            await asyncio.gather(*[callback(WialonEvents(response)) for callback in self.__handlers])
+            events = AvlEvent.parse_avl_events_response(response)
+            await asyncio.gather(*[self.process_event_handlers(event) for event in events])
             await asyncio.sleep(timeout)
 
     async def avl_evts(self):
@@ -130,8 +149,8 @@ class Wialon(object):
         sess = await self.call('token_login', *args, **kwargs)
         if sess:
             self.sid = sess['eid']
-        if self._session_did_open:
-            await self._session_did_open()
+        if self.__on_session_open:
+            await self.__on_session_open()
         return sess
 
     async def request(self, action_name, url, payload):
