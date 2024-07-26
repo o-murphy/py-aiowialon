@@ -10,6 +10,7 @@ import aiohttp
 from aiohttp.client_exceptions import ClientResponseError, ClientConnectorError
 
 from aiowialon.exceptions import WialonError
+from aiowialon.types.event import WialonEvents
 
 
 class Wialon(object):
@@ -56,7 +57,7 @@ class Wialon(object):
     def token(self, value):
         self._token = value
 
-    def session_did_open(self, callback: Callable[[None], Coroutine]):
+    def session_did_open(self, callback: Callable[[], Coroutine]):
         self._session_did_open = callback
 
     def update_extra_params(self, **params):
