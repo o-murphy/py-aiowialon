@@ -11,26 +11,15 @@ wialon = Wialon(token=TEST_TOKEN)
 
 @wialon.on_session_open
 async def register_avl_events():
-    spec = {
-        'itemsType': 'avl_unit',
-        'propName': 'sys_name',
-        'propValueMask': '*',
-        'sortType': 'sys_name'
-    }
-    interval = {"from": 0, "to": 100}
-    units = await wialon.core_search_items(spec=spec, force=1, flags=5, **interval)
-    if 'items' in units:
-        ids = [u['id'] for u in units['items']]
-
-        spec = [
-            {
-                "type": "col",
-                "data": ids,
-                "flags": flags.UnitsDataFlag.BASE | flags.UnitsDataFlag.POS,
-                "mode": 0
-            }
-        ]
-        await wialon.core_update_data_flags(spec=spec)
+    spec = [
+        {
+            "type": "type",
+            "data": "avl_unit",
+            "flags": flags.UnitsDataFlag.BASE | flags.UnitsDataFlag.POS,
+            "mode": 0
+        }
+    ]
+    await wialon.core_update_data_flags(spec=spec)
 
 
 @wialon.event_handler(lambda event: True)

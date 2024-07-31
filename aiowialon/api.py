@@ -3,7 +3,7 @@
 
 import asyncio
 import json
-from typing import Callable, Coroutine, Dict, Optional
+from typing import Callable, Coroutine, Dict, Optional, Any
 from urllib.parse import urljoin
 
 import aiohttp
@@ -13,12 +13,13 @@ from aiowialon.exceptions import WialonError
 from aiowialon.types.event import AvlEventHandler, AvlEventFilter, AvlEvent
 
 
-class Wialon(object):
-    request_headers = {
+class Wialon:
+    request_headers: dict = {
         'Accept-Encoding': 'gzip, deflate'
     }
 
-    def __init__(self, scheme='http', host="hst-api.wialon.com", port=80, token=None, sid=None, **extra_params):
+    def __init__(self, scheme: str = 'http', host: str = "hst-api.wialon.com",
+                 port: int = 80, token: str = None, sid: str = None, **extra_params: Any):
         """
         Created the Wialon API object.
         """
@@ -27,13 +28,7 @@ class Wialon(object):
         self.__default_params: Dict = {}
         self.__default_params.update(extra_params)
 
-        self.__base_url = (
-            '{scheme}://{host}:{port}'.format(
-                scheme=scheme,
-                host=host,
-                port=port
-            )
-        )
+        self.__base_url = f'{scheme}://{host}:{port}'
 
         self.__base_api_url: str = urljoin(self.__base_url, 'wialon/ajax.html?')
 
@@ -57,7 +52,7 @@ class Wialon(object):
     def token(self, token: str) -> None:
         self._token = token
 
-    def update_extra_params(self, **params) -> None:
+    def update_extra_params(self, **params: Any) -> None:
         """
         Updated the Wialon API default parameters.
         """
@@ -108,7 +103,7 @@ class Wialon(object):
             await asyncio.gather(*[self.process_event_handlers(event) for event in events])
             await asyncio.sleep(timeout)
 
-    async def avl_evts(self):
+    async def avl_evts(self) -> Coroutine[Any, Any, None]:
         """
         Call avl_event request
         """
@@ -119,7 +114,7 @@ class Wialon(object):
 
         return await self.request('avl_evts', url, params)
 
-    async def call(self, action_name, *args, **kwargs):
+    async def call(self, action_name: str, *args: Any, **kwargs: Any) -> Coroutine[Any, Any, None]:
         """
         Call the API method provided with the parameters supplied.
         """
@@ -143,7 +138,7 @@ class Wialon(object):
         all_params.update(params)
         return await self.request(action_name, self.__base_api_url, all_params)
 
-    async def token_login(self, token=None, *args, **kwargs):
+    async def token_login(self, token: str=None, *args: Any, **kwargs: Any) -> Coroutine[Any, Any, None]:
         if token:
             self.token = token
         kwargs['token'] = self.token
@@ -155,7 +150,7 @@ class Wialon(object):
             await self.__on_session_open()
         return sess
 
-    async def request(self, action_name, url, payload):
+    async def request(self, action_name: str, url: str, payload: Any) -> Coroutine[Any, Any, None]:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(url, data=payload, headers=self.request_headers) as response:
@@ -169,7 +164,7 @@ class Wialon(object):
                     except ValueError as e:
                         raise WialonError(
                             0,
-                            u"Invalid response from Wialon: {0}".format(e),
+                            f"Invalid response from Wialon: {e}",
                         )
 
                     if isinstance(result, dict) and 'error' in result and result['error'] > 0:
@@ -190,14 +185,14 @@ class Wialon(object):
 
                     return result
         except ClientResponseError as e:
-            raise WialonError(0, u"HTTP {code}".format(e.status))
+            raise WialonError(0, f"HTTP {e.status}")
         except ClientConnectorError as e:
             raise WialonError(0, str(e))
 
         except Exception as err:
-            return err
+            raise err from err
 
-    def __getattr__(self, action_name):
+    def __getattr__(self, action_name: str):
         """
         Enable the calling of Wialon API methods through Python method calls
         of the same name.
@@ -207,6 +202,3 @@ class Wialon(object):
             return self.call(action_name, *args, **kwargs)
 
         return get.__get__(self, object)
-
-    async def core_use_auth_hash(self, *args, **kwargs):
-        return await self.call('core_use_auth_hash', *args, *kwargs)
