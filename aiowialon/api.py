@@ -119,6 +119,30 @@ class Wialon:
         Call the API method provided with the parameters supplied.
         """
 
+        def replace_keys_and_convert_format(d):
+            if not isinstance(d, dict):
+                return d
+
+            new_dict = {}
+            for k, v in d.items():
+                # Remove trailing underscores
+                new_key = k.rstrip('_') if k.endswith('_') else k
+
+                # Convert CapitalisedKey to capitalisedParam
+                new_key = new_key[:1].lower() + new_key[1:] if new_key else ''
+
+                # Process nested dictionaries and lists
+                if isinstance(v, dict):
+                    new_dict[new_key] = replace_keys_and_convert_format(v)
+                elif isinstance(v, list):
+                    new_dict[new_key] = [replace_keys_and_convert_format(item) if isinstance(item, dict) else item for
+                                         item in v]
+                else:
+                    new_dict[new_key] = v
+            return new_dict
+
+        kwargs = replace_keys_and_convert_format(kwargs)
+
         if not kwargs:
             # List params for batch
             if isinstance(args, tuple) and len(args) == 1:
@@ -138,7 +162,7 @@ class Wialon:
         all_params.update(params)
         return await self.request(action_name, self.__base_api_url, all_params)
 
-    async def token_login(self, token: str=None, *args: Any, **kwargs: Any) -> Coroutine[Any, Any, None]:
+    async def token_login(self, token: str = None, *args: Any, **kwargs: Any) -> Coroutine[Any, Any, None]:
         if token:
             self.token = token
         kwargs['token'] = self.token

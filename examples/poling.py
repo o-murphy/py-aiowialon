@@ -13,7 +13,7 @@ wialon = Wialon(token=TEST_TOKEN)
 async def register_avl_events():
     spec = [
         {
-            "type": "type",
+            "type_": "type",
             "data": "avl_unit",
             "flags": flags.UnitsDataFlag.BASE | flags.UnitsDataFlag.POS,
             "mode": 0
