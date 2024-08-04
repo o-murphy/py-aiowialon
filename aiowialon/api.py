@@ -198,7 +198,7 @@ class Wialon:
                 new_params[new_key] = v
         return new_params
 
-    def batch(self, *calls: Coroutine, flags: BatchFlag = BatchFlag.EXECUTE_ALL) -> Coroutine[Any, Any, Any]:
+    def batch(self, *calls: Coroutine[Any, Any, Any], flags: BatchFlag = BatchFlag.EXECUTE_ALL) -> Coroutine[Any, Any, Any]:
         actions = []
 
         for coroutine in calls:
@@ -294,6 +294,7 @@ class Wialon:
         if isinstance(session, dict):
             self.sid = session['eid']
             logger.debug(f"sid: {self.sid}")
+            logger.info("Wialon session opened")
         else:
             raise TypeError(f"Unexpected login response: {session}")
         if self.__on_session_open:

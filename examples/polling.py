@@ -13,7 +13,8 @@ wialon = Wialon(token=TEST_TOKEN)
 
 
 @wialon.on_session_open
-async def register_avl_events():
+async def register_avl_events(session):
+    print("Session eid:", session['eid'])
     spec = [
         {
             "type_": "type",
@@ -32,8 +33,8 @@ async def unit_event(event: AvlEvent):
 
 
 async def main() -> None:
-    t = asyncio.create_task(wialon.start_polling())
-    await asyncio.sleep(10)
+    poll = asyncio.create_task(wialon.start_polling())
+    await asyncio.sleep(3600)
 
 
 if __name__ == "__main__":

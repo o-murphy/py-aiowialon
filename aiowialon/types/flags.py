@@ -485,6 +485,11 @@ class BatchFlag(IntFlag):
     EXECUTE_ALL = 0
     STOP_ON_ERROR = 1
 
+
+class GetAccountResultType(IntFlag):
+    MINIMAL = 1
+    DETAILED = 2
+
 # if __name__ == '__main__':
 #     # EXAMPLE
 #     def convert_api_description_to_enums():

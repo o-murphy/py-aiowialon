@@ -1,4 +1,4 @@
-from typing import TypedDict, Optional, Callable, Coroutine, Any
+from typing import TypedDict, Optional, Callable, Coroutine, Any, Dict
 
 
 class LoginParams(TypedDict, total=False):
@@ -10,7 +10,7 @@ class LoginParams(TypedDict, total=False):
     checkService: Optional[str]
 
 
-OnLoginCallback = Callable[[Any], Coroutine]
+OnLoginCallback = Callable[[Dict[str, Any]], Coroutine]
 
 
 __all__ = ('LoginParams', 'OnLoginCallback')
