@@ -19,7 +19,8 @@ async def register_avl_events():
             "mode": 0
         }
     ]
-    await wialon.core_update_data_flags(spec=spec)
+    c = wialon.core_update_data_flags(spec=spec)
+    return await wialon.batch(c)
 
 
 @wialon.event_handler(lambda event: True)

@@ -4,6 +4,8 @@
 [ ] OOP Models for Items
 [ ] Prevent batch for some calls
 [ ] Allow multipart
+[ ] update README
+[ ] add logging
 
 [ ] [Report column value types](https://sdk.wialon.com/wiki/en/sidebar/remoteapi/apiref/report/value_types)
 [ ] [Other requests](https://sdk.wialon.com/wiki/en/sidebar/remoteapi/apiref/requests/requests)

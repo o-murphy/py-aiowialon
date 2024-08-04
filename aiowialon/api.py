@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
+import inspect
 import json
 from typing import Callable, Coroutine, Dict, Optional, Any, Union
 from typing_extensions import Unpack
@@ -105,7 +106,7 @@ class Wialon:
             await asyncio.gather(*[self.process_event_handlers(event) for event in events])
             await asyncio.sleep(timeout)
 
-    def avl_evts(self) -> Any:
+    def avl_evts(self) -> Coroutine[Any, Any, Any]:
         """
         Call avl_event request
         """
@@ -116,7 +117,7 @@ class Wialon:
 
         return self.request('avl_evts', url, params)
 
-    def call(self, action_name: str, *args: Any, **params: Any) -> Coroutine[Any, Any, Any]:
+    async def call(self, action_name: str, *args: Any, **params: Any) -> Coroutine[Any, Any, Any]:
         """
         Call the API method provided with the parameters supplied.
         """
@@ -131,14 +132,12 @@ class Wialon:
 
         full_payload = self.__default_params.copy()
         full_payload.update(params)
-        return self.request(action_name, self.__base_api_url, full_payload)
+        return await self.request(action_name, self.__base_api_url, full_payload)
 
     @classmethod
-    def _is_call(cls, coroutine: Coroutine) -> bool:
-        if coroutine.cr_code.co_code == cls.call.__name__:
-            if coroutine.cr_frame:
-                f_locals = coroutine.cr_frame.f_locals
-                return f_locals.get('self', f_locals.get('cls', None)) is not None
+    def _is_call(cls, coroutine: Coroutine[Any, Any, Any]) -> bool:
+        if coroutine.__qualname__ == cls.call.__qualname__:
+            return True
         return False
 
     @staticmethod
@@ -168,7 +167,7 @@ class Wialon:
                 new_params[new_key] = v
         return new_params
 
-    def batch(self, *calls: Coroutine, flags: int = 0) -> Coroutine[Any, Any, None]:
+    def batch(self, *calls: Coroutine, flags: int = 0) -> Coroutine[Any, Any, Any]:
         actions = []
 
         for coroutine in calls:
@@ -177,14 +176,15 @@ class Wialon:
             coroutine_locals = coroutine.cr_frame.f_locals
             actions.append({
                 'svc': self._prepare_action_name(coroutine_locals['action_name']),
-                'params': coroutine_locals['kwargs']
+                'params': coroutine_locals['params']
             })
+            coroutine.close()
 
         batch_params = {
             'params': actions,
             'flags': flags
         }
-        return self.core_batch(params=batch_params)
+        return self.core_batch(**batch_params)
 
     async def request(self, action_name: str, url: str, payload: Any) -> Any:
         try:
