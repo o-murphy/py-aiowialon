@@ -13,8 +13,8 @@ wialon = Wialon(token=TEST_TOKEN)
 
 
 @wialon.on_session_open
-async def register_avl_events(session):
-    print("Session eid:", session['eid'])
+async def register_avl_events(session_login):
+    print("Session eid:", session_login['eid'])
     spec = [
         {
             "type_": "type",
@@ -23,14 +23,18 @@ async def register_avl_events(session):
             "mode": 0
         }
     ]
-    c = wialon.core_update_data_flags(spec=spec)
-    return await wialon.batch(c)
+    return await wialon.core_update_data_flags(spec=spec)
 
 
-@wialon.event_handler(lambda event: True)
+@wialon.on_session_close
+async def on_session_close(session_logout):
+    print("Logout event:", session_logout)
+
+
+@wialon.avl_event_handler(lambda event: True)
 async def unit_event(event: AvlEvent):
     print("Handler got event:", event)
 
 
 if __name__ == "__main__":
-    asyncio.run(wialon.start_polling())
+    asyncio.run(wialon.start_polling(logout_finally=True))

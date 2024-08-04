@@ -1,5 +1,5 @@
 from .avl_events import AvlEvent, AvlEventCallback, AvlEventFilter, AvlEventData, AvlEventHandler
-from .login import LoginParams, OnLoginCallback
+from .login import LoginParams, OnLoginCallback, OnLogoutCallback
 
 __all__ = (
     'AvlEvent',
@@ -8,5 +8,6 @@ __all__ = (
     'AvlEventData',
     'AvlEventHandler',
     'LoginParams',
-    'OnLoginCallback'
+    'OnLoginCallback',
+    'OnLogoutCallback'
 )

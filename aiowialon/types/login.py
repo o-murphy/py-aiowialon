@@ -11,6 +11,7 @@ class LoginParams(TypedDict, total=False):
 
 
 OnLoginCallback = Callable[[Dict[str, Any]], Coroutine]
+OnLogoutCallback = Callable[[Dict[str, Any]], Coroutine]
 
 
-__all__ = ('LoginParams', 'OnLoginCallback')
+__all__ = ('LoginParams', 'OnLoginCallback', 'OnLogoutCallback')

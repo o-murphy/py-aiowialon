@@ -57,13 +57,13 @@ def run():
             ]
             await wialon_session.core_update_data_flags(spec=spec)
 
-    @wialon_session.event_handler
+    @wialon_session.avl_event_handler
     async def event_handler(events: WialonEvents):
         if 116106 in events.events:
             item_event: WialonEvent = events.events[116106]
             print(item_event.item, item_event.e_type, item_event.desc)
 
-    @wialon_session.event_handler
+    @wialon_session.avl_event_handler
     async def event_handler(events: WialonEvents):
         spec = {
             'itemsType': 'avl_unit',

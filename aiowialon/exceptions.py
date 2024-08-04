@@ -18,24 +18,26 @@ class WialonError(Exception):
         1003: 'Only one request of given time is allowed at the moment'
     }
 
-    def __init__(self, code, text):
-        self._text = text
-        self._code = code
+    def __init__(self, code, reason="", action_name=""):
+        self.code = code
+        self.reason = reason
+        self.action_name = action_name
         try:
-            self._code = int(code)
+            self.code = int(code)
         except ValueError:
             pass
 
-    def __unicode__(self):
-        explanation = self._text
-        if self._code in WialonError.errors:
-            explanation = " ".join([WialonError.errors[self._code], self._text])
-
-        message = u'{error} ({code})'.format(error=explanation, code=self._code)
-        return u'WialonError({message})'.format(message=message)
+    def description(self):
+        explanation = WialonError.errors.get(self.code, 6)
+        action_name = f'"{self.action_name}" ' if self.action_name else ""
+        reason = f": {self.reason}" if self.reason else ""
+        return '{error} {action_name}({code}){reason}'.format(
+            error=explanation, code=self.code, reason=reason,
+            action_name=action_name
+        )
 
     def __str__(self):
-        return self.__unicode__()
+        return 'WialonError({message})'.format(message=self.description())
 
     def __repr__(self):
         return str(self)
