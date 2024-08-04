@@ -313,3 +313,12 @@ class Wialon:
             return self.call(action_name, *args, **kwargs)
 
         return get.__get__(self, object)
+
+    @staticmethod
+    def help(service_name: str, action_name: str) -> None:
+        url = f"https://sdk.wialon.com/wiki/en/sidebar/remoteapi/apiref/{service_name}/{action_name}"
+        try:
+            import webbrowser
+            webbrowser.open(url)
+        except Exception:
+            print("Cannot open webbrowser")
