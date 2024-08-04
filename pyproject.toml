@@ -31,7 +31,11 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 
-dependencies = ["aiohttp", "simplejson"]
+dependencies = [
+    "aiohttp",
+    "simplejson",
+    "StrEnum; python_version <= '3.9''
+]
 
 dynamic = ["version"]
 

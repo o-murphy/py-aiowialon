@@ -28,14 +28,13 @@ async def unit_event(event: AvlEvent):
     print("Handler got event:", event)
 
 
-async def main():
-    """
-    Poling example
-    """
-    wialon.start_poling()
-    while True:
-        await asyncio.sleep(3600)
+async def main() -> None:
+    asyncio.create_task(wialon.start_polling(timeout=1))
+    await asyncio.sleep(5)
+    await wialon.stop_polling()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(
+        main()
+    )

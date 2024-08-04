@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from enum import StrEnum
+from aiowialon.compatibility import StrEnum
 from typing import Optional, Callable, Coroutine, Dict, Any, List, Union
 
 

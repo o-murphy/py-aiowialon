@@ -1,4 +1,5 @@
-from enum import IntFlag, StrEnum
+from enum import IntFlag
+from aiowialon.compatibility import StrEnum
 
 
 class ItemType(StrEnum):

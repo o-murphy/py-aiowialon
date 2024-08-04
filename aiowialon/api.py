@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
-import inspect
 import json
-from typing import Callable, Coroutine, Dict, Optional, Any, Union
-from typing_extensions import Unpack
+from asyncio import Event
+from contextlib import suppress
+from typing import Callable, Coroutine, Dict, Optional, Any, Union, Awaitable
+from aiowialon.compatibility import Unpack
 from urllib.parse import urljoin
 
 import aiohttp
@@ -37,7 +38,8 @@ class Wialon:
 
         self.__handlers: Dict[str, AvlEventHandler] = {}
         self.__on_session_open: Optional[Callable[[], Coroutine]] = None
-        self.__task: Optional[asyncio.Task] = None
+        # self.__task: Optional[asyncio.Task] = None
+        self._running_lock = asyncio.Lock()
 
     @property
     def sid(self) -> Optional[str]:
@@ -82,28 +84,53 @@ class Wialon:
             if await handler(event):
                 break
 
-    def start_poling(self, timeout: Union[int, float] = 2, **params: Unpack[LoginParams]) -> None:
-        if not self.__task:
-            asyncio.create_task(self.poling(timeout, **params))
-        else:
-            raise RuntimeError("Wialon Polling Task already started")
+    async def start_polling(self, timeout: Union[int, float] = 2, **params: Unpack[LoginParams]) -> None:
+        async with self._running_lock:
 
-    def stop_poling(self) -> None:
-        if self.__task:
-            self.__task.cancel()
-            self.__task = None
-        else:
-            raise RuntimeError("Wialon Polling Task already stopped")
+            try:
+                tasks = [
+                    asyncio.create_task(self._polling(timeout, **params)),
+                ]
+                done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+                for task in pending:
+                    task.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await task
+                await asyncio.gather(*done)
+            finally:
+                try:
+                    if self.sid:
+                        await self.core_logout()
+                finally:
+                    print("Polling stopped")
 
-    async def poling(self, timeout: Union[int, float] = 2, **params: Unpack[LoginParams]) -> None:
+    async def stop_polling(self) -> Any:
+        """
+        Execute this method if you want to stop polling programmatically
+
+        :return:
+        """
+        if not self._running_lock.locked():
+            raise RuntimeError("Polling is not started")
+        if self.sid:
+            logout = await self.core_logout()
+            self.sid = None
+            return logout
+
+    async def _polling(self, timeout: Union[int, float] = 2, **params: Unpack[LoginParams]) -> None:
         if timeout < 1:
             raise ValueError("Poling timeout have to be >= 1 second. "
                              "No more than 10 “poling” - requests can be processed during 10 seconds")
         await self.login(**params)
         while self.sid:
+            print(self.sid)
             response = await self.avl_evts()
             events = AvlEvent.parse_avl_events_response(response)
-            await asyncio.gather(*[self.process_event_handlers(event) for event in events])
+            try:
+                await asyncio.gather(*[self.process_event_handlers(event) for event in events])
+            except WialonError as err:
+                if err._code == 1003:
+                    print(err)
             await asyncio.sleep(timeout)
 
     def avl_evts(self) -> Coroutine[Any, Any, Any]:
