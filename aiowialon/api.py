@@ -99,8 +99,7 @@ class Wialon:
                 await asyncio.gather(*done)
             finally:
                 try:
-                    if self.sid:
-                        await self.core_logout()
+                    await self.stop_polling()
                 finally:
                     print("Polling stopped")
 
@@ -121,7 +120,14 @@ class Wialon:
         if timeout < 1:
             raise ValueError("Poling timeout have to be >= 1 second. "
                              "No more than 10 “poling” - requests can be processed during 10 seconds")
-        await self.login(**params)
+        try:
+            await self.login(**params)
+        except WialonError as e:
+            print(e)
+            return
+        except Exception as e:
+            print(e)
+
         while self.sid:
             print(self.sid)
             response = await self.avl_evts()
@@ -131,6 +137,8 @@ class Wialon:
             except WialonError as err:
                 if err._code == 1003:
                     print(err)
+            except Exception as e:
+                return
             await asyncio.sleep(timeout)
 
     def avl_evts(self) -> Coroutine[Any, Any, Any]:
