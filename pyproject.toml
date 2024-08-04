@@ -33,7 +33,7 @@ classifiers = [
 
 dependencies = [
     "aiohttp",
-    "simplejson",
+    'json_strong_typing',
     "StrEnum; python_version <= '3.9'"
 ]
 

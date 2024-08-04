@@ -6,7 +6,7 @@ import json
 import logging
 from contextlib import suppress
 from typing import Callable, Coroutine, Dict, Optional, Any, Union, Literal
-from aiowialon.compatibility import Unpack
+from aiowialon.types.compatibility import Unpack
 from urllib.parse import urljoin
 
 import aiohttp
