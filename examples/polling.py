@@ -32,12 +32,5 @@ async def unit_event(event: AvlEvent):
     print("Handler got event:", event)
 
 
-async def main() -> None:
-    poll = asyncio.create_task(wialon.start_polling())
-    await asyncio.sleep(3600)
-
-
 if __name__ == "__main__":
-    asyncio.run(
-        main()
-    )
+    asyncio.run(wialon.start_polling())

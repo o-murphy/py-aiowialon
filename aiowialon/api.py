@@ -89,6 +89,7 @@ class Wialon:
         async with self._running_lock:
 
             try:
+                logger.info("Wialon start polling")
                 tasks = [
                     asyncio.create_task(self._polling(timeout, **params)),
                 ]
@@ -102,7 +103,7 @@ class Wialon:
                 try:
                     await self.stop_polling()
                 finally:
-                    logger.info("Polling stopped")
+                    logger.info("Wialon polling stopped")
 
     async def stop_polling(self) -> Any:
         """
@@ -113,6 +114,7 @@ class Wialon:
         if not self._running_lock.locked():
             raise RuntimeError("Polling is not started")
         if self.sid:
+            logger.info("Wialon logout")
             logout = await self.core_logout()
             self.sid = None
             return logout
