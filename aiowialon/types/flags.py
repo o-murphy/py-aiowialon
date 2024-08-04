@@ -480,6 +480,11 @@ class TokenFlag(IntFlag):
     USE_UNIT_IN_JOBS_NOTIFS_ROUTES_RETRANSLATORS = 549755813888
     MANAGE_ACCOUNT = 4294967296  # 0x100000000, Manage account
 
+
+class BatchFlag(IntFlag):
+    EXECUTE_ALL = 0
+    STOP_ON_ERROR = 1
+
 # if __name__ == '__main__':
 #     # EXAMPLE
 #     def convert_api_description_to_enums():

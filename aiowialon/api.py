@@ -5,7 +5,7 @@ import asyncio
 import json
 import logging
 from contextlib import suppress
-from typing import Callable, Coroutine, Dict, Optional, Any, Union
+from typing import Callable, Coroutine, Dict, Optional, Any, Union, Literal
 from aiowialon.compatibility import Unpack
 from urllib.parse import urljoin
 
@@ -16,6 +16,7 @@ from aiowialon.exceptions import WialonError
 from aiowialon.logger import logger, aiohttp_client_logger
 from aiowialon.types import AvlEventHandler, AvlEventFilter, AvlEvent, AvlEventCallback
 from aiowialon.types import LoginParams, OnLoginCallback
+from aiowialon.types.flags import BatchFlag
 
 
 class Wialon:
@@ -23,7 +24,7 @@ class Wialon:
         'Accept-Encoding': 'gzip, deflate'
     }
 
-    def __init__(self, scheme: str = 'http', host: str = "hst-api.wialon.com",
+    def __init__(self, scheme: Literal['https', 'http'] = 'http', host: str = "hst-api.wialon.com",
                  port: int = 80, token: Optional[str] = None, sid: Optional[str] = None, **extra_params: Dict):
         """
         Created the Wialon API object.
@@ -38,8 +39,7 @@ class Wialon:
         self.__base_api_url: str = urljoin(self.__base_url, 'wialon/ajax.html?')
 
         self.__handlers: Dict[str, AvlEventHandler] = {}
-        self.__on_session_open: Optional[Callable[[], Coroutine]] = None
-        # self.__task: Optional[asyncio.Task] = None
+        self.__on_session_open: Optional[OnLoginCallback] = None
         self._running_lock = asyncio.Lock()
 
     @property
@@ -64,7 +64,7 @@ class Wialon:
         """
         self.__default_params.update(params)
 
-    def on_session_open(self, callback: Optional[OnLoginCallback] = None) -> OnLoginCallback:
+    def on_session_open(self, callback: Optional[OnLoginCallback] = None) -> Optional[OnLoginCallback]:
         if callback and not callable(callback):
             raise TypeError("on_session_open callback must be callable")
         self.__on_session_open = callback
@@ -198,7 +198,7 @@ class Wialon:
                 new_params[new_key] = v
         return new_params
 
-    def batch(self, *calls: Coroutine, flags: int = 0) -> Coroutine[Any, Any, Any]:
+    def batch(self, *calls: Coroutine, flags: BatchFlag = BatchFlag.EXECUTE_ALL) -> Coroutine[Any, Any, Any]:
         actions = []
 
         for coroutine in calls:
@@ -297,7 +297,7 @@ class Wialon:
         else:
             raise TypeError(f"Unexpected login response: {session}")
         if self.__on_session_open:
-            await self.__on_session_open()
+            await self.__on_session_open(session)
         return session
 
     def __getattr__(self, action_name: str):

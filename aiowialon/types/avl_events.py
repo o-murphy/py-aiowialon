@@ -49,7 +49,7 @@ AvlEventFilter = Callable[[AvlEvent], bool]
 class AvlEventHandler:
     def __init__(self,
                  callback: AvlEventCallback,
-                 filter_: AvlEventFilter = None) -> None:
+                 filter_: Optional[AvlEventFilter] = None) -> None:
         self._callback: AvlEventCallback = callback
         self._filter: Optional[AvlEventFilter] = filter_
 
@@ -82,11 +82,11 @@ class AvlEventHandler:
         self._callback = callback
 
     @property
-    def filter(self) -> AvlEventFilter:
+    def filter(self) -> Optional[AvlEventFilter]:
         return self._filter
 
     @filter.setter
-    def filter(self, filter_: AvlEventFilter = None) -> None:
+    def filter(self, filter_: Optional[AvlEventFilter] = None) -> None:
         if filter_ and not callable(filter_):
             raise TypeError('AvlEventHandler.filter_ must be a type of Optional[Callable[[AvlEvent], bool]]')
         self.filter_ = filter_

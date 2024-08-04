@@ -34,7 +34,7 @@ classifiers = [
 dependencies = [
     "aiohttp",
     "simplejson",
-    "StrEnum; python_version <= '3.9''
+    "StrEnum; python_version <= '3.9'"
 ]
 
 dynamic = ["version"]
