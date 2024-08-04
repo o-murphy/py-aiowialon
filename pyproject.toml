@@ -40,6 +40,9 @@ dynamic = ["version"]
 "Bug Reports" = "https://github.com/o-murphy/py-aiowialon/issues"
 "Source" = "https://github.com/o-murphy/py-aiowialon"
 
+[project.optional-dependencies]
+dev = ["mypy"]
+
 [tool.setuptools]
 py-modules = ["aiowialon"]
 

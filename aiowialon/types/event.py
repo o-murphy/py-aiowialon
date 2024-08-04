@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Optional, Callable, Coroutine, Dict, Any, List
+from typing import Optional, Callable, Coroutine, Dict, Any, List, Union
 
 
 class AvlEventType(StrEnum):
@@ -24,7 +24,7 @@ class AvlEventData:
 
 @dataclass(frozen=True)
 class AvlEvent:
-    tm: [int, None]
+    tm: Union[int, None]
     event: AvlEventData
 
     def __post_init__(self):
@@ -48,8 +48,8 @@ class AvlEventHandler:
     def __init__(self,
                  callback: AvlEventCallback,
                  filter_: AvlEventFilter = None) -> None:
-        self._callback = None
-        self._filter = None
+        self._callback: AvlEventCallback = callback
+        self._filter: Optional[AvlEventFilter] = filter_
 
         self.callback = callback
         self.filter = filter_
@@ -58,7 +58,7 @@ class AvlEventHandler:
         if not self._filter:
             await self._callback(event)
             return True
-        elif self._filter:
+        elif self._filter is not None:
             if self._filter(event):
                 await self._callback(event)
                 return True
