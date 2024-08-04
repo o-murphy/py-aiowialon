@@ -3,9 +3,9 @@
 
 import asyncio
 import json
-from asyncio import Event
+import logging
 from contextlib import suppress
-from typing import Callable, Coroutine, Dict, Optional, Any, Union, Awaitable
+from typing import Callable, Coroutine, Dict, Optional, Any, Union
 from aiowialon.compatibility import Unpack
 from urllib.parse import urljoin
 
@@ -13,6 +13,7 @@ import aiohttp
 from aiohttp.client_exceptions import ClientResponseError, ClientConnectorError
 
 from aiowialon.exceptions import WialonError
+from aiowialon.logger import logger, aiohttp_client_logger
 from aiowialon.types import AvlEventHandler, AvlEventFilter, AvlEvent, AvlEventCallback
 from aiowialon.types import LoginParams, OnLoginCallback
 
@@ -101,7 +102,7 @@ class Wialon:
                 try:
                     await self.stop_polling()
                 finally:
-                    print("Polling stopped")
+                    logger.info("Polling stopped")
 
     async def stop_polling(self) -> Any:
         """
@@ -123,22 +124,17 @@ class Wialon:
         try:
             await self.login(**params)
         except WialonError as e:
-            print(e)
+            logger.exception(e)
             return
-        except Exception as e:
-            print(e)
 
         while self.sid:
-            print(self.sid)
             response = await self.avl_evts()
             events = AvlEvent.parse_avl_events_response(response)
             try:
                 await asyncio.gather(*[self.process_event_handlers(event) for event in events])
             except WialonError as err:
                 if err._code == 1003:
-                    print(err)
-            except Exception as e:
-                return
+                    logger.exception(err)
             await asyncio.sleep(timeout)
 
     def avl_evts(self) -> Coroutine[Any, Any, Any]:
@@ -222,9 +218,27 @@ class Wialon:
         return self.core_batch(**batch_params)
 
     async def request(self, action_name: str, url: str, payload: Any) -> Any:
+        async def on_request_start(session, context, params):
+            logging.getLogger('aiohttp.client').debug(f'<{params}>')
+
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(url, data=payload, headers=self.request_headers) as response:
+
+            async def on_request_start(session, context, params):
+                aiohttp_client_logger.debug(f'<{params}>')
+
+            async def on_request_end(session, context, params):
+                aiohttp_client_logger.debug(f'<{params}>')
+
+            # async def on_response_chunk_received(session, context, params):
+            #     aiohttp_client_logger.debug(f'<{params}>')
+
+            trace_config = aiohttp.TraceConfig()
+            trace_config.on_request_start.append(on_request_start)
+            trace_config.on_request_end.append(on_request_end)
+            # trace_config.on_response_chunk_received.append(on_response_chunk_received)
+
+            async with aiohttp.ClientSession(trace_configs=[trace_config]) as session:
+                async with session.post(url, data=payload, headers=self.request_headers, ) as response:
                     response_data = await response.read()
                     response_headers = response.headers
                     content_type = response_headers.getone('Content-Type')
@@ -259,7 +273,6 @@ class Wialon:
             raise WialonError(0, f"HTTP {e.status}")
         except ClientConnectorError as e:
             raise WialonError(0, str(e))
-
         except Exception as err:
             raise err from err
 
@@ -269,6 +282,7 @@ class Wialon:
         if token and auth_hash:
             raise WialonError(1, "You can't use both token and auth_hash at the login")
 
+        logger.info('Wialon login')
         if auth_hash:
             session = await self.core_use_auth_hash(**params)
         else:
@@ -279,6 +293,7 @@ class Wialon:
 
         if isinstance(session, dict):
             self.sid = session['eid']
+            logger.debug(f"sid: {self.sid}")
         else:
             raise TypeError(f"Unexpected login response: {session}")
         if self.__on_session_open:

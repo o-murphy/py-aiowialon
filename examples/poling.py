@@ -3,9 +3,12 @@ import asyncio
 from aiowialon.api import Wialon
 from aiowialon.types import flags
 from aiowialon.types.avl_events import AvlEvent
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 # Wialon SDK playground token
-TEST_TOKEN = '5dce19710a5e26ab8b7b8986cb3c49e58C291791B7F0A7AEB8AFBFCEED7DC03BC48FF5F8_'
+TEST_TOKEN = '5dce19710a5e26ab8b7b8986cb3c49e58C291791B7F0A7AEB8AFBFCEED7DC03BC48FF5F8'
 wialon = Wialon(token=TEST_TOKEN)
 
 
@@ -30,7 +33,7 @@ async def unit_event(event: AvlEvent):
 
 async def main() -> None:
     t = asyncio.create_task(wialon.start_polling())
-    await asyncio.sleep(5)
+    await asyncio.sleep(10)
 
 
 if __name__ == "__main__":

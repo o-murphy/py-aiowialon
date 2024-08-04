@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from aiowialon.compatibility import StrEnum
 from typing import Optional, Callable, Coroutine, Dict, Any, List, Union
 
+from aiowialon.logger import logger
+
 
 class AvlEventType(StrEnum):
     MESSAGE = "m"
@@ -56,13 +58,17 @@ class AvlEventHandler:
 
     async def __call__(self, event: AvlEvent) -> bool:
         if not self._filter:
-            await self._callback(event)
+            await self.__handle(event)
             return True
         elif self._filter is not None:
             if self._filter(event):
-                await self._callback(event)
+                await self.__handle(event)
                 return True
         return False
+
+    async def __handle(self, event: AvlEvent) -> None:
+        logger.info(f"Got AVL event {event}")
+        await self._callback(event)
 
     @property
     def callback(self) -> AvlEventCallback:
