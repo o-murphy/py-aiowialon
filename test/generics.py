@@ -1,3 +1,4 @@
+import inspect
 from dataclasses import dataclass
 from functools import wraps
 from typing import TypedDict, List, Optional, Union
@@ -14,15 +15,18 @@ class JsonRequestData:
         # abstract Params(TypedDict)
         pass
 
+    def __init__(self, **kwargs: Unpack[Params]):
+        super().__init__(self, **kwargs)
+
     def __post_init__(self):
         # Initialize the instance using json_to_object if needed
-        params = self.__dict__
-        updated_instance = json_to_object(self.__class__, params)
+        updated_instance = json_to_object(self.__class__, self.__dict__)
         # Update the current instance's attributes
         self.__dict__.update(updated_instance.__dict__)
 
     def json(self):
         return object_to_json(self)
+
 
 # @warp
 @dataclass(kw_only=True)
@@ -31,6 +35,7 @@ class CoreGetAccountData(JsonRequestData):
 
     class Params(TypedDict, total=False):
         type: GetAccountResultType
+
 
 # @warp
 @dataclass(kw_only=True)
@@ -43,7 +48,6 @@ class CoreCheckItemsBilling(JsonRequestData):
         items: List[int]
         accessFlags: AccessControlFlags
         serviceName: str
-
 
 
 @dataclass
@@ -78,3 +82,14 @@ def func(**kwargs: Unpack[CoreGetAccountData.Params]):
 
 func(type=2)
 print(json_to_object(CoreGetAccountData, {}))
+
+def print_classes_in_scope():
+    # Get the current module
+    current_module = inspect.getmodule(inspect.currentframe())
+    # Iterate over all items in the module's dictionary
+    for name, obj in current_module.__dict__.items():
+        # Check if the object is a class
+        if inspect.isclass(obj):
+            print(name)
+
+print_classes_in_scope()
