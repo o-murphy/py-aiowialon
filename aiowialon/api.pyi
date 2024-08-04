@@ -1,4 +1,4 @@
-from aiowialon.types.compatibility import Unpack as Unpack
+from aiowialon.utils.compatibility import Unpack as Unpack
 from aiowialon.types import AvlEvent as AvlEvent, AvlEventFilter as AvlEventFilter, LoginParams as LoginParams, OnLoginCallback as OnLoginCallback
 from aiowialon.types.flags import BatchFlag as BatchFlag
 from typing import Any, Callable, Coroutine, Literal

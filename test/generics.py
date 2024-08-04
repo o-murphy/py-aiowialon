@@ -4,8 +4,8 @@
 from pydantic import BaseModel, ConfigDict
 from dataclasses import dataclass
 from typing import TypedDict
-from aiowialon.types.compatibility import Unpack
-from strong_typing.serialization import json_to_object, object_to_json
+from aiowialon.utils.compatibility import Unpack
+from strong_typing.serialization import object_to_json
 from aiowialon.types.flags import GetAccountResultType
 
 

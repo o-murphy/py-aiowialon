@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import TypedDict, List, Optional
 
 from aiowialon.types.flags import AccessControlFlags, GetAccountResultType
-from aiowialon.types.compatibility import Unpack
+from aiowialon.utils.compatibility import Unpack
 from strong_typing.serialization import json_to_object, object_to_json
 from abc import ABC
 
