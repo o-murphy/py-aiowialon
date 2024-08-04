@@ -41,7 +41,7 @@ class AvlEvent:
 
 
 AvlEventCallback = Callable[[AvlEvent], Coroutine]
-AvlEventFilter = Optional[Callable[[AvlEvent], bool]]
+AvlEventFilter = Callable[[AvlEvent], bool]
 
 
 class AvlEventHandler:
@@ -84,3 +84,13 @@ class AvlEventHandler:
         if filter_ and not callable(filter_):
             raise TypeError('AvlEventHandler.filter_ must be a type of Optional[Callable[[AvlEvent], bool]]')
         self.filter_ = filter_
+
+
+__all__ = (
+    'AvlEvent',
+    'AvlEventCallback',
+    'AvlEventFilter',
+    'AvlEventData',
+    'AvlEventHandler',
+
+)

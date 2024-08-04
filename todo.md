@@ -2,6 +2,8 @@
 [ ] http requests rate limit
 [ ] Automatic request batching
 [ ] OOP Models for Items
+[ ] Prevent batch for some calls
+[ ] Allow multipart
 
 [ ] [Report column value types](https://sdk.wialon.com/wiki/en/sidebar/remoteapi/apiref/report/value_types)
 [ ] [Other requests](https://sdk.wialon.com/wiki/en/sidebar/remoteapi/apiref/requests/requests)

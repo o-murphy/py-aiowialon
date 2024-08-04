@@ -2,7 +2,7 @@ import asyncio
 
 from aiowialon.api import Wialon
 from aiowialon.types import flags
-from aiowialon.types.event import AvlEvent
+from aiowialon.types.avl_events import AvlEvent
 
 # Wialon SDK playground token
 TEST_TOKEN = '5dce19710a5e26ab8b7b8986cb3c49e58C291791B7F0A7AEB8AFBFCEED7DC03BC48FF5F8'

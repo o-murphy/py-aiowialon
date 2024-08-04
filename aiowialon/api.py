@@ -4,13 +4,15 @@
 import asyncio
 import json
 from typing import Callable, Coroutine, Dict, Optional, Any, Union
+from typing_extensions import Unpack
 from urllib.parse import urljoin
 
 import aiohttp
 from aiohttp.client_exceptions import ClientResponseError, ClientConnectorError
 
 from aiowialon.exceptions import WialonError
-from aiowialon.types.event import AvlEventHandler, AvlEventFilter, AvlEvent
+from aiowialon.types import AvlEventHandler, AvlEventFilter, AvlEvent, AvlEventCallback
+from aiowialon.types import LoginParams, OnLoginCallback
 
 
 class Wialon:
@@ -58,14 +60,14 @@ class Wialon:
         """
         self.__default_params.update(params)
 
-    def on_session_open(self, callback: Optional[Callable[[], Coroutine]] = None) -> Optional[Callable[[], Coroutine]]:
+    def on_session_open(self, callback: Optional[OnLoginCallback] = None) -> OnLoginCallback:
         if callback and not callable(callback):
             raise TypeError("on_session_open callback must be callable")
         self.__on_session_open = callback
         return callback
 
-    def event_handler(self, filter_: AvlEventFilter = None) -> Callable:
-        def decorator(callback: AvlEventHandler):
+    def event_handler(self, filter_: Optional[AvlEventFilter] = None) -> Callable:
+        def decorator(callback: AvlEventCallback):
             handler = AvlEventHandler(callback, filter_)
             if callback.__name__ in self.__handlers:
                 raise KeyError(f"Detected EventHandler duplicate {callback.__name__}")
@@ -79,9 +81,9 @@ class Wialon:
             if await handler(event):
                 break
 
-    def start_poling(self, token: Optional[str] = None, timeout: Union[int, float] = 2) -> None:
+    def start_poling(self, timeout: Union[int, float] = 2, **params: Unpack[LoginParams]) -> None:
         if not self.__task:
-            asyncio.create_task(self.poling(token, timeout))
+            asyncio.create_task(self.poling(timeout, **params))
         else:
             raise RuntimeError("Wialon Polling Task already started")
 
@@ -92,11 +94,11 @@ class Wialon:
         else:
             raise RuntimeError("Wialon Polling Task already stopped")
 
-    async def poling(self, token: Optional[str] = None, timeout: Union[float, int] = 2) -> None:
+    async def poling(self, timeout: Union[int, float] = 2, **params: Unpack[LoginParams]) -> None:
         if timeout < 1:
             raise ValueError("Poling timeout have to be >= 1 second. "
                              "No more than 10 “poling” - requests can be processed during 10 seconds")
-        await self.token_login(token=token)
+        await self.login(**params)
         while self.sid:
             response = await self.avl_evts()
             events = AvlEvent.parse_avl_events_response(response)
@@ -114,7 +116,7 @@ class Wialon:
 
         return self.request('avl_evts', url, params)
 
-    def call(self, action_name: str, *args, **params: Any) -> Coroutine[Any, Any, Any]:
+    def call(self, action_name: str, *args: Any, **params: Any) -> Coroutine[Any, Any, Any]:
         """
         Call the API method provided with the parameters supplied.
         """
@@ -148,7 +150,7 @@ class Wialon:
         if not isinstance(params, dict):
             return params
 
-        new_dict = {}
+        new_params: Dict[str, Any] = {}
         for k, v in params.items():
             # Remove trailing underscores
             new_key = k.rstrip('_') if k.endswith('_') else k
@@ -158,13 +160,13 @@ class Wialon:
 
             # Process nested dictionaries and lists
             if isinstance(v, dict):
-                new_dict[new_key] = cls._prepare_params(v)
+                new_params[new_key] = cls._prepare_params(v)
             elif isinstance(v, list):
-                new_dict[new_key] = [cls._prepare_params(item) if isinstance(item, dict) else item for
-                                     item in v]
+                new_params[new_key] = [cls._prepare_params(item) if isinstance(item, dict) else item for
+                                       item in v]
             else:
-                new_dict[new_key] = v
-        return new_dict
+                new_params[new_key] = v
+        return new_params
 
     def batch(self, *calls: Coroutine, flags: int = 0) -> Coroutine[Any, Any, None]:
         actions = []
@@ -183,20 +185,6 @@ class Wialon:
             'flags': flags
         }
         return self.core_batch(params=batch_params)
-
-    async def token_login(self, token: Optional[str] = None, *args, **params: Any) -> Dict[str, Any]:
-        if token:
-            self.token = token
-        params['token'] = self.token
-        params['appName'] = 'py-aiowialon'
-        session = await self.call('token_login', *args, **params)
-        if isinstance(session, dict):
-            self.sid = session['eid']
-        else:
-            raise TypeError(f"Unexpected token_login response: {session}")
-        if self.__on_session_open:
-            await self.__on_session_open()
-        return session
 
     async def request(self, action_name: str, url: str, payload: Any) -> Any:
         try:
@@ -239,6 +227,28 @@ class Wialon:
 
         except Exception as err:
             raise err from err
+
+    async def login(self, **params: Unpack[LoginParams]) -> Dict[str, Any]:
+        token = params.get("token", None)
+        auth_hash = params.get("auth_hash", None)
+        if token and auth_hash:
+            raise WialonError(1, "You can't use both token and auth_hash at the login")
+
+        if auth_hash:
+            session = await self.core_use_auth_hash(**params)
+        else:
+            if token:
+                self.token = token
+            params['token'] = self.token
+            session = await self.token_login(**params)
+
+        if isinstance(session, dict):
+            self.sid = session['eid']
+        else:
+            raise TypeError(f"Unexpected login response: {session}")
+        if self.__on_session_open:
+            await self.__on_session_open()
+        return session
 
     def __getattr__(self, action_name: str):
         """
