@@ -16,6 +16,7 @@ from aiowialon.logger import logger, aiohttp_client_logger, aiohttp_trace_config
 from aiowialon.types import AvlEventHandler, AvlEventFilter, AvlEvent, AvlEventCallback, OnLogoutCallback
 from aiowialon.types import LoginParams, OnLoginCallback
 from aiowialon.types.flags import BatchFlag
+from aiowialon.validators import CallResponseValidator
 
 
 class Wialon:
@@ -277,38 +278,11 @@ class Wialon:
                     try:
                         async with session.post(url, data=payload, headers=self.request_headers) as response:
                             response_data = await response.read()
-                            response_headers = response.headers
-                            content_type = response_headers.getone('Content-Type')
-
-                            try:
-                                if content_type == 'application/json':
-                                    result = json.loads(response_data)
-                            except ValueError as e:
-                                raise WialonError(
-                                    code=3,
-                                    reason=f"Invalid response content type",
-                                    action_name=action_name
-                                )
-
-                            if isinstance(result, dict) and 'error' in result and result.get('error', 6) > 0:
-                                raise WialonError(
-                                    code=result.get("error", 6),
-                                    reason=result.get("reason", ""),
-                                    action_name=action_name
-                                )
-
-                            if isinstance(result, list) and action_name == 'core_batch':
-                                errors = []
-                                # Check for batch errors
-                                for i, item in enumerate(result):
-                                    if isinstance(item, dict) and 'error' in item and item.get('error', 6) > 0:
-                                        err = WialonError(code=item.get("error", 6), reason=item.get("reason", ""))
-                                        errors.append(f"{i}. {err.description()}")
-
-                                if errors:
-                                    reasons = ", ".join(errors)
-                                    raise WialonError(3, f'[{reasons}]', action_name)
-
+                            await CallResponseValidator.validate_headers(action_name, response)
+                            result = json.loads(response_data)
+                            await CallResponseValidator.validate_result(action_name, result)
+                            if action_name == 'core_batch':
+                                await CallResponseValidator.validate_batch_result(result)
                             return result
                     except Exception as e:
                         logger.exception(e)

@@ -27,17 +27,15 @@ class WialonError(Exception):
         except ValueError:
             pass
 
-    def description(self):
+    def __str__(self):
         explanation = WialonError.errors.get(self.code, 6)
         action_name = f'"{self.action_name}" ' if self.action_name else ""
         reason = f": {self.reason}" if self.reason else ""
-        return '{error} {action_name}({code}){reason}'.format(
+        message = '{error} {action_name}({code}){reason}'.format(
             error=explanation, code=self.code, reason=reason,
             action_name=action_name
         )
-
-    def __str__(self):
-        return 'WialonError({message})'.format(message=self.description())
+        return 'WialonError({message})'.format(message=message)
 
     def __repr__(self):
         return str(self)
