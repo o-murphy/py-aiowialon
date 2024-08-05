@@ -1,5 +1,5 @@
-- [ ] http requests queue
-- [ ] http requests rate limit
+- [x] http requests queue
+- [x] http requests rate limit
 - [ ] Automatic request batching
 - [ ] OOP Models for Items
 - [ ] Prevent batch for some calls

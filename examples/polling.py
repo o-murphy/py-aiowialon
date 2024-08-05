@@ -35,6 +35,5 @@ async def on_session_close(session_logout):
 async def unit_event(event: AvlEvent):
     print("Handler got event:", event)
 
-
 if __name__ == "__main__":
     asyncio.run(wialon.start_polling(logout_finally=True))

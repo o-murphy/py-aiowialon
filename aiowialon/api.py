@@ -3,17 +3,16 @@
 
 import asyncio
 import json
-import logging
 from contextlib import suppress
 from typing import Callable, Coroutine, Dict, Optional, Any, Union, Literal
 from aiowialon.utils.compatibility import Unpack
 from urllib.parse import urljoin
 
 import aiohttp
-# from aiohttp.client_exceptions import ClientResponseError, ClientConnectorError
+from aiolimiter import AsyncLimiter
 
 from aiowialon.exceptions import WialonError
-from aiowialon.logger import logger, aiohttp_client_logger
+from aiowialon.logger import logger, aiohttp_client_logger, aiohttp_trace_config
 from aiowialon.types import AvlEventHandler, AvlEventFilter, AvlEvent, AvlEventCallback, OnLogoutCallback
 from aiowialon.types import LoginParams, OnLoginCallback
 from aiowialon.types.flags import BatchFlag
@@ -21,11 +20,14 @@ from aiowialon.types.flags import BatchFlag
 
 class Wialon:
     request_headers: dict = {
-        'Accept-Encoding': 'gzip, deflate'
+        'Accept-Encoding': 'gzip, deflate',
+        'Content-Type': 'application/x-www-form-urlencoded'
     }
 
     def __init__(self, scheme: Literal['https', 'http'] = 'http', host: str = "hst-api.wialon.com",
-                 port: int = 80, token: Optional[str] = None, sid: Optional[str] = None, **extra_params: Dict):
+                 port: int = 80, token: Optional[str] = None, sid: Optional[str] = None,
+                 requests_per_second: int = 10,
+                 **extra_params: Any):
         """
         Created the Wialon API object.
         """
@@ -41,8 +43,12 @@ class Wialon:
         self.__handlers: Dict[str, AvlEventHandler] = {}
         self.__on_session_open: Optional[OnLoginCallback] = None
         self.__on_session_close: Optional[OnLogoutCallback] = None
+
         self.__running_lock = asyncio.Lock()
         self.__polling_task: Optional[asyncio.Task] = None
+
+        self.__semaphore = asyncio.Semaphore(10)
+        self.__limiter: AsyncLimiter = AsyncLimiter(requests_per_second, 1)
 
     @property
     def sid(self) -> Optional[str]:
@@ -168,9 +174,9 @@ class Wialon:
 
     async def _polling(self, timeout: Union[int, float] = 2) -> None:
         while self.sid:
-            response = await self.avl_evts()
-            events = AvlEvent.parse_avl_events_response(response)
             try:
+                response = await self.avl_evts()
+                events = AvlEvent.parse_avl_events_response(response)
                 await asyncio.gather(*[self._process_event_handlers(event) for event in events])
             except WialonError as err:
                 if err.code == 1003:
@@ -186,13 +192,12 @@ class Wialon:
             'sid': self.sid
         }
 
-        return self.request('avl_evts', url, params, self.request_headers)
+        return self.request('avl_evts', url, params)
 
     async def call(self, action_name: str, *args: Any, **params: Any) -> Coroutine[Any, Any, Any]:
         """
         Call the API method provided with the parameters supplied.
         """
-
         params = self.prepare_params(params)
         payload = json.dumps(params, ensure_ascii=False)
         params = {
@@ -203,7 +208,7 @@ class Wialon:
 
         full_payload = self.__default_params.copy()
         full_payload.update(params)
-        return await self.request(action_name, self.__base_api_url, full_payload, self.request_headers)
+        return await self.request(action_name, self.__base_api_url, full_payload)
 
     @classmethod
     def _is_call(cls, coroutine: Coroutine[Any, Any, Any]) -> bool:
@@ -238,10 +243,9 @@ class Wialon:
                 new_params[new_key] = v
         return new_params
 
-    def batch(self, *calls: Coroutine[Any, Any, Any], flags: BatchFlag = BatchFlag.EXECUTE_ALL) -> Coroutine[
-        Any, Any, Any]:
+    def batch(self, *calls: Coroutine[Any, Any, Any],
+              flags: BatchFlag = BatchFlag.EXECUTE_ALL) -> Coroutine[Any, Any, Any]:
         actions = []
-
         for coroutine in calls:
             if not self._is_call(coroutine) or not coroutine.cr_frame:
                 raise TypeError("Coroutine is not an Wialon.call")
@@ -251,12 +255,7 @@ class Wialon:
                 'params': coroutine_locals['params']
             })
             coroutine.close()
-
-        batch_params = {
-            'params': actions,
-            'flags': flags
-        }
-        return self.core_batch(**batch_params)
+        return self.core_batch(params=actions, flags=flags)
 
     def __getattr__(self, action_name: str):
         """
@@ -269,69 +268,51 @@ class Wialon:
 
         return get.__get__(self, object)
 
-    @staticmethod
-    async def request(action_name: str, url: str, payload: Any, headers: Optional[Dict[str, Any]] = None) -> Any:
-        async def on_request_start(session, context, params):
-            logging.getLogger('aiohttp.client').debug(f'<{params}>')
-
-        try:
-
-            async def on_request_start(session, context, params):
-                aiohttp_client_logger.debug(f'<{params}>')
-
-            async def on_request_end(session, context, params):
-                aiohttp_client_logger.debug(f'<{params}>')
-
-            # async def on_response_chunk_received(session, context, params):
-            #     aiohttp_client_logger.debug(f'<{params}>')
-
-            trace_config = aiohttp.TraceConfig()
-            trace_config.on_request_start.append(on_request_start)
-            trace_config.on_request_end.append(on_request_end)
-            # trace_config.on_response_chunk_received.append(on_response_chunk_received)
-
-            async with aiohttp.ClientSession(trace_configs=[trace_config]) as session:
-                async with session.post(url, data=payload, headers=headers, ) as response:
-                    response_data = await response.read()
-                    response_headers = response.headers
-                    content_type = response_headers.getone('Content-Type')
-
+    async def request(self, action_name: str, url: str, payload: Any) -> Any:
+        async with self.__limiter:
+            async with self.__semaphore:
+                async with aiohttp.ClientSession(
+                        trust_env=True,
+                        trace_configs=[aiohttp_trace_config]) as session:
                     try:
-                        if content_type == 'application/json':
-                            result = json.loads(response_data)
-                    except ValueError as e:
-                        raise WialonError(
-                            code=3,
-                            reason=f"Invalid response content type",
-                            action_name=action_name
-                        )
+                        async with session.post(url, data=payload, headers=self.request_headers) as response:
+                            response_data = await response.read()
+                            response_headers = response.headers
+                            content_type = response_headers.getone('Content-Type')
 
-                    if isinstance(result, dict) and 'error' in result and result.get('error', 6) > 0:
-                        raise WialonError(
-                            code=result.get("error", 6),
-                            reason=result.get("reason", ""),
-                            action_name=action_name
-                        )
+                            try:
+                                if content_type == 'application/json':
+                                    result = json.loads(response_data)
+                            except ValueError as e:
+                                raise WialonError(
+                                    code=3,
+                                    reason=f"Invalid response content type",
+                                    action_name=action_name
+                                )
 
-                    if isinstance(result, list) and action_name == 'core_batch':
-                        errors = []
-                        # Check for batch errors
-                        for i, item in enumerate(result):
-                            if isinstance(item, dict):
-                                err = WialonError(code=item.get("error", 6), reason=item.get("reason", ""))
-                                errors.append(f"{i}. {err.description()}")
+                            if isinstance(result, dict) and 'error' in result and result.get('error', 6) > 0:
+                                raise WialonError(
+                                    code=result.get("error", 6),
+                                    reason=result.get("reason", ""),
+                                    action_name=action_name
+                                )
 
-                        if errors:
-                            reasons = ", ".join(errors)
-                            raise WialonError(3, f'[{reasons}]', action_name)
+                            if isinstance(result, list) and action_name == 'core_batch':
+                                errors = []
+                                # Check for batch errors
+                                for i, item in enumerate(result):
+                                    if isinstance(item, dict) and 'error' in item and item.get('error', 6) > 0:
+                                        err = WialonError(code=item.get("error", 6), reason=item.get("reason", ""))
+                                        errors.append(f"{i}. {err.description()}")
 
-                    return result
-        # except ClientResponseError as e:
-        #     raise WialonError(0, f"HTTP {e.status}")
-        # except ClientConnectorError as e:
-        #     raise WialonError(0, str(e))
-        except Exception as err:
-            raise err from err
+                                if errors:
+                                    reasons = ", ".join(errors)
+                                    raise WialonError(3, f'[{reasons}]', action_name)
+
+                            return result
+                    except Exception as e:
+                        logger.exception(e)
+                        raise
 
     @staticmethod
     def help(service_name: str, action_name: str) -> None:
@@ -339,5 +320,5 @@ class Wialon:
         try:
             import webbrowser
             webbrowser.open(url)
-        except Exception:
-            print("Cannot open webbrowser")
+        except Exception as e:
+            logger.info(f"Cannot open webbrowser: {url}")

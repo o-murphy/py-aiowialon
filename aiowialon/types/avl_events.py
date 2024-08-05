@@ -1,3 +1,5 @@
+import asyncio
+from contextlib import suppress
 from dataclasses import dataclass, field
 from aiowialon.utils.compatibility import StrEnum
 from typing import Optional, Callable, Coroutine, Dict, Any, List, Union
@@ -68,7 +70,14 @@ class AvlEventHandler:
 
     async def __handle(self, event: AvlEvent) -> None:
         logger.info(f"Got AVL event {event}")
-        await self._callback(event)
+        try:
+            with suppress(asyncio.CancelledError):
+                await self._callback(event)
+        except asyncio.CancelledError:
+            logger.info(f"{self._callback.__name__} cancelled")
+        except Exception as e:
+            logger.error(f"Exception happened on {self._callback.__name__}")
+            logger.exception(e)
 
     @property
     def callback(self) -> AvlEventCallback:
