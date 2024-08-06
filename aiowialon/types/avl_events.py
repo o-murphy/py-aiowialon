@@ -29,11 +29,11 @@ class AvlEventData:
 @dataclass(frozen=True)
 class AvlEvent:
     tm: Union[int, None]
-    event: AvlEventData
+    data: AvlEventData
 
     def __post_init__(self):
-        if not isinstance(self.event, AvlEventData) and isinstance(self.event, dict):
-            object.__setattr__(self, 'event', AvlEventData(**self.event))
+        if not isinstance(self.data, AvlEventData) and isinstance(self.data, dict):
+            object.__setattr__(self, 'event', AvlEventData(**self.data))
         else:
             raise TypeError("AvlEvent.event have be a AvlEventData")
 

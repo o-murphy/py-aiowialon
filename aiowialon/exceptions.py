@@ -1,6 +1,9 @@
+from typing import Optional
+
+
 class WialonError(Exception):
     """
-    Exception raised when an Wialon Remote API call fails due to a network
+    Exception raised when a Wialon Remote API call fails due to a network
     related error or for a Wialon specific reason.
     """
     errors = {
@@ -18,7 +21,7 @@ class WialonError(Exception):
         1003: 'Only one request of given time is allowed at the moment'
     }
 
-    def __init__(self, code, reason="", action_name=""):
+    def __init__(self, code: int, reason: Optional[str] = None, action_name: Optional[str] = None):
         self.code = code
         self.reason = reason
         self.action_name = action_name
@@ -32,10 +35,99 @@ class WialonError(Exception):
         action_name = f'"{self.action_name}" ' if self.action_name else ""
         reason = f": {self.reason}" if self.reason else ""
         message = '{error} {action_name}({code}){reason}'.format(
-            error=explanation, code=self.code, reason=reason,
-            action_name=action_name
-        )
+            error=explanation,
+            code=self.code,
+            reason=reason,
+            action_name=action_name)
         return 'WialonError({message})'.format(message=message)
 
     def __repr__(self):
         return str(self)
+
+
+class WialonInvalidSession(WialonError, PermissionError):
+
+    def __init__(self, reason: Optional[str] = None, action_name: Optional[str] = None):
+        super().__init__(1, reason, action_name)
+
+
+class WialonInvalidService(WialonError, LookupError):
+
+    def __init__(self, reason: Optional[str] = None, action_name: Optional[str] = None):
+        super().__init__(2, reason, action_name)
+
+
+class WialonInvalidResult(WialonError, RuntimeError):
+
+    def __init__(self, reason: Optional[str] = None, action_name: Optional[str] = None):
+        super().__init__(3, reason, action_name)
+
+
+class WialonInvalidInput(WialonError, ValueError):
+
+    def __init__(self, reason: Optional[str] = None, action_name: Optional[str] = None):
+        super().__init__(4, reason, action_name)
+
+
+class WialonErrorPerformingRequest(WialonError, RuntimeError):
+
+    def __init__(self, reason: Optional[str] = None, action_name: Optional[str] = None):
+        super().__init__(5, reason, action_name)
+
+
+class WialonUnknownError(WialonError, Exception):
+
+    def __init__(self, reason: Optional[str] = None, action_name: Optional[str] = None):
+        super().__init__(6, reason, action_name)
+
+
+class WialonAccessDenied(WialonError, PermissionError):
+
+    def __init__(self, reason: Optional[str] = None, action_name: Optional[str] = None):
+        super().__init__(7, reason, action_name)
+
+
+class WialonInvalidCredentials(WialonError, PermissionError):
+
+    def __init__(self, reason: Optional[str] = None, action_name: Optional[str] = None):
+        super().__init__(8, reason, action_name)
+
+
+class WialonAuthServerUnavailableError(WialonError, ConnectionError):
+
+    def __init__(self, reason: Optional[str] = None, action_name: Optional[str] = None):
+        super().__init__(9, reason, action_name)
+
+
+class WialonMessageNotFoundError(WialonError, ValueError):
+
+    def __init__(self, reason: Optional[str] = None, action_name: Optional[str] = None):
+        super().__init__(1001, reason, action_name)
+
+
+class WialonDuplicateItemError(WialonError, LookupError):
+
+    def __init__(self, reason: Optional[str] = None, action_name: Optional[str] = None):
+        super().__init__(1002, reason, action_name)
+
+
+class WialonRequestLimitExceededError(WialonError, RuntimeError):
+
+    def __init__(self, reason: Optional[str] = None, action_name: Optional[str] = None):
+        super().__init__(1003, reason, action_name)
+
+
+WIALON_EXCEPTIONS = {
+    1: WialonInvalidSession,
+    2: WialonInvalidService,
+    3: WialonInvalidResult,
+    4: WialonInvalidInput,
+    5: WialonErrorPerformingRequest,
+    6: WialonUnknownError,
+    7: WialonAccessDenied,
+    8: WialonInvalidCredentials,
+    9: WialonAuthServerUnavailableError,
+    1001: WialonMessageNotFoundError,
+    1002: WialonDuplicateItemError,
+    1003: WialonRequestLimitExceededError
+}

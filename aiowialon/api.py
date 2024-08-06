@@ -11,12 +11,12 @@ from urllib.parse import urljoin
 import aiohttp
 from aiolimiter import AsyncLimiter
 
-from aiowialon.exceptions import WialonError
-from aiowialon.logger import logger, aiohttp_client_logger, aiohttp_trace_config
+from aiowialon import exceptions
+from aiowialon.logger import logger, aiohttp_trace_config
 from aiowialon.types import AvlEventHandler, AvlEventFilter, AvlEvent, AvlEventCallback, OnLogoutCallback
 from aiowialon.types import LoginParams, OnLoginCallback
 from aiowialon.types.flags import BatchFlag
-from aiowialon.validators import CallResponseValidator
+from aiowialon.validators import WialonCallResponseValidator
 
 
 class Wialon:
@@ -179,9 +179,8 @@ class Wialon:
                 response = await self.avl_evts()
                 events = AvlEvent.parse_avl_events_response(response)
                 await asyncio.gather(*[self._process_event_handlers(event) for event in events])
-            except WialonError as err:
-                if err.code == 1003:
-                    logger.exception(err)
+            except exceptions.WialonRequestLimitExceededError as err:
+                logger.exception(err)
             await asyncio.sleep(timeout)
 
     def avl_evts(self) -> Coroutine[Any, Any, Any]:
@@ -278,13 +277,11 @@ class Wialon:
                     try:
                         async with session.post(url, data=payload, headers=self.request_headers) as response:
                             response_data = await response.read()
-                            await CallResponseValidator.validate_headers(action_name, response)
+                            await WialonCallResponseValidator.validate_headers(action_name, response)
                             result = json.loads(response_data)
-                            await CallResponseValidator.validate_result(action_name, result)
-                            if action_name == 'core_batch':
-                                await CallResponseValidator.validate_batch_result(result)
+                            await WialonCallResponseValidator.validate_result(action_name, result)
                             return result
-                    except Exception as e:
+                    except exceptions.WialonError as e:
                         logger.exception(e)
                         raise
 
@@ -294,5 +291,5 @@ class Wialon:
         try:
             import webbrowser
             webbrowser.open(url)
-        except Exception as e:
+        except ImportError:
             logger.info(f"Cannot open webbrowser: {url}")

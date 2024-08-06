@@ -1,36 +1,19 @@
-from typing import Any
+from typing import Any, Dict
 
 import aiohttp
 
-from aiowialon.exceptions import WialonError
+from aiowialon.exceptions import WIALON_EXCEPTIONS, WialonError, WialonInvalidResult
 
 
-class CallResponseValidator:
-
-    @staticmethod
-    async def validate_result(action_name: str, result: Any) -> None:
-        if isinstance(result, dict) and 'error' in result and result.get('error', 6) > 0:
-            raise WialonError(
-                code=result.get("error", 6),
-                reason=result.get("reason", ""),
-                action_name=action_name
-            )
+class WialonCallResponseValidator:
 
     @staticmethod
-    async def validate_batch_result(result: Any):
-        if isinstance(result, list):
-            exceptions = []
-            # Check for batch errors
-            for i, item in enumerate(result):
-                try:
-                    if isinstance(item, dict) and 'error' in item and item.get('error', 6) > 0:
-                        raise WialonError(code=item.get("error", 6), reason=item.get("reason", ""))
-                except WialonError as e:
-                    exceptions.append(f"{i}. {e}")
-
-            if exceptions:
-                reasons = ", ".join(exceptions)
-                raise WialonError(3, f'[{reasons}]', 'core_batch')
+    async def raise_wialon_error(action_name: str, result: Dict[str, Any]) -> None:
+        code = result.get('error', 6)
+        if code == 0:
+            return
+        reason = result.get("reason", None)
+        raise WIALON_EXCEPTIONS[code](action_name, reason)
 
     @staticmethod
     async def validate_headers(action_name, response: aiohttp.ClientResponse) -> None:
@@ -38,8 +21,24 @@ class CallResponseValidator:
         content_type = response_headers.getone('Content-Type')
 
         if content_type != 'application/json':
-            raise WialonError(
-                code=3,
-                reason=f"Invalid response content type",
+            raise WialonInvalidResult(
+                reason=f"Invalid response content type: expected 'application/json', got '{content_type}'",
                 action_name=action_name
             )
+
+    @staticmethod
+    async def validate_result(action_name: str, result: Any) -> None:
+        if isinstance(result, dict):
+            if 'error' in result:
+                await WialonCallResponseValidator.raise_wialon_error(action_name, result)
+        if action_name == 'core_batch':
+            if isinstance(result, list):
+                exceptions = []
+                for i, item in enumerate(result):
+                    try:
+                        await WialonCallResponseValidator.validate_result(str(i), item)
+                    except WialonError as err:
+                        exceptions.append(f"{i}. {err}")
+                if exceptions:
+                    reasons = ", ".join(exceptions)
+                    raise WialonInvalidResult(f'[{reasons}]', 'core_batch')
