@@ -4,7 +4,7 @@
 import asyncio
 import json
 from contextlib import suppress
-from typing import Callable, Coroutine, Dict, Optional, Any, Union, Literal
+from typing import Callable, Coroutine, Dict, Optional, Any, Union, Literal, List
 from aiowialon.utils.compatibility import Unpack
 from urllib.parse import urljoin
 
@@ -16,6 +16,7 @@ from aiowialon.logger import logger, aiohttp_trace_config
 from aiowialon.types import AvlEventHandler, AvlEventFilter, AvlEvent, AvlEventCallback, OnLogoutCallback
 from aiowialon.types import LoginParams, OnLoginCallback
 from aiowialon.types.flags import BatchFlag
+from aiowialon.utils import convention
 from aiowialon.validators import WialonCallResponseValidator
 
 
@@ -183,7 +184,7 @@ class Wialon:
                 logger.exception(err)
             await asyncio.sleep(timeout)
 
-    def avl_evts(self) -> Coroutine[Any, Any, Any]:
+    async def avl_evts(self) -> Any:
         """
         Call avl_event request
         """
@@ -192,16 +193,16 @@ class Wialon:
             'sid': self.sid
         }
 
-        return self.request('avl_evts', url, params)
+        return await self.request('avl_evts', url, params)
 
-    async def call(self, action_name: str, *args: Any, **params: Any) -> Coroutine[Any, Any, Any]:
+    async def call(self, action_name: str, *args: Any, **params: Any) -> Any:
         """
         Call the API method provided with the parameters supplied.
         """
-        params = self.prepare_params(params)
+        params = convention.prepare_action_params(params)
         payload = json.dumps(params, ensure_ascii=False)
         params = {
-            'svc': self.prepare_action_name(action_name),
+            'svc': convention.prepare_action_name(action_name),
             'params': payload,
             'sid': self.sid
         }
@@ -216,46 +217,19 @@ class Wialon:
             return True
         return False
 
-    @staticmethod
-    def prepare_action_name(action_name: str) -> str:
-        return action_name.replace('_', '/', 1)
-
-    @staticmethod
-    def prepare_params(params: dict) -> dict:
-        if not isinstance(params, dict):
-            return params
-
-        new_params: Dict[str, Any] = {}
-        for k, v in params.items():
-            # Remove trailing underscores
-            new_key = k.rstrip('_') if k.endswith('_') else k
-
-            # Convert CapitalisedKey to capitalisedParam
-            new_key = new_key[:1].lower() + new_key[1:] if new_key else ''
-
-            # Process nested dictionaries and lists
-            if isinstance(v, dict):
-                new_params[new_key] = Wialon.prepare_params(v)
-            elif isinstance(v, list):
-                new_params[new_key] = [Wialon.prepare_params(item) if isinstance(item, dict) else item for
-                                       item in v]
-            else:
-                new_params[new_key] = v
-        return new_params
-
-    def batch(self, *calls: Coroutine[Any, Any, Any],
-              flags: BatchFlag = BatchFlag.EXECUTE_ALL) -> Coroutine[Any, Any, Any]:
+    async def batch(self, *calls: Coroutine[Any, Any, Any],
+                    flags: BatchFlag = BatchFlag.EXECUTE_ALL) -> List[Any]:
         actions = []
         for coroutine in calls:
             if not self._is_call(coroutine) or not coroutine.cr_frame:
                 raise TypeError("Coroutine is not an Wialon.call")
             coroutine_locals = coroutine.cr_frame.f_locals
             actions.append({
-                'svc': self.prepare_action_name(coroutine_locals['action_name']),
+                'svc': convention.prepare_action_name(coroutine_locals['action_name']),
                 'params': coroutine_locals['params']
             })
             coroutine.close()
-        return self.core_batch(params=actions, flags=flags)
+        return await self.core_batch(params=actions, flags=flags)
 
     def __getattr__(self, action_name: str):
         """
@@ -282,6 +256,9 @@ class Wialon:
                             await WialonCallResponseValidator.validate_result(action_name, result)
                             return result
                     except exceptions.WialonError as e:
+                        logger.exception(e)
+                        raise
+                    except Exception as e:
                         logger.exception(e)
                         raise
 

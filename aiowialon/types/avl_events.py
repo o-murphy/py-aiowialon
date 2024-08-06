@@ -33,7 +33,7 @@ class AvlEvent:
 
     def __post_init__(self):
         if not isinstance(self.data, AvlEventData) and isinstance(self.data, dict):
-            object.__setattr__(self, 'event', AvlEventData(**self.data))
+            object.__setattr__(self, 'data', AvlEventData(**self.data))
         else:
             raise TypeError("AvlEvent.event have be a AvlEventData")
 

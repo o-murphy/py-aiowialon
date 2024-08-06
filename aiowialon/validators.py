@@ -13,7 +13,10 @@ class WialonCallResponseValidator:
         if code == 0:
             return
         reason = result.get("reason", None)
-        raise WIALON_EXCEPTIONS[code](action_name, reason)
+        if code in WIALON_EXCEPTIONS:
+            raise WIALON_EXCEPTIONS[code](reason, action_name, result)
+        elif code in WialonError.errors:
+            raise WialonError(code, reason, action_name, result)
 
     @staticmethod
     async def validate_headers(action_name, response: aiohttp.ClientResponse) -> None:
@@ -23,7 +26,8 @@ class WialonCallResponseValidator:
         if content_type != 'application/json':
             raise WialonInvalidResult(
                 reason=f"Invalid response content type: expected 'application/json', got '{content_type}'",
-                action_name=action_name
+                action_name=action_name,
+                result=await response.read()
             )
 
     @staticmethod
@@ -36,9 +40,8 @@ class WialonCallResponseValidator:
                 exceptions = []
                 for i, item in enumerate(result):
                     try:
-                        await WialonCallResponseValidator.validate_result(str(i), item)
+                        await WialonCallResponseValidator.validate_result(f"core_batch[{i}]", item)
                     except WialonError as err:
-                        exceptions.append(f"{i}. {err}")
-                if exceptions:
-                    reasons = ", ".join(exceptions)
-                    raise WialonInvalidResult(f'[{reasons}]', 'core_batch')
+                        exceptions.append(err)
+                if len(exceptions) > 0:
+                    raise WialonInvalidResult(exceptions, 'core_batch', result)
