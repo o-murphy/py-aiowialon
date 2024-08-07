@@ -5,7 +5,7 @@ import aiohttp
 from aiowialon.exceptions import WIALON_EXCEPTIONS, WialonError, WialonInvalidResult
 
 
-class WialonCallResponseValidator:
+class WialonCallRespValidator:
 
     @staticmethod
     async def raise_wialon_error(action_name: str, result: Dict[str, Any]) -> None:
@@ -15,7 +15,7 @@ class WialonCallResponseValidator:
         reason = result.get("reason", None)
         if code in WIALON_EXCEPTIONS:
             raise WIALON_EXCEPTIONS[code](reason, action_name, result)
-        elif code in WialonError.errors:
+        if code in WialonError.errors:
             raise WialonError(code, reason, action_name, result)
 
     @staticmethod
@@ -25,23 +25,27 @@ class WialonCallResponseValidator:
 
         if content_type != 'application/json':
             raise WialonInvalidResult(
-                reason=f"Invalid response content type: expected 'application/json', got '{content_type}'",
-                action_name=action_name,
-                result=await response.read()
+                f"Invalid response content type: "
+                f"expected 'application/json', got '{content_type}'",
+                action_name,
+                await response.read()
             )
 
     @staticmethod
     async def validate_result(action_name: str, result: Any) -> None:
         if isinstance(result, dict):
             if 'error' in result:
-                await WialonCallResponseValidator.raise_wialon_error(action_name, result)
+                await WialonCallRespValidator.raise_wialon_error(action_name, result)
         if action_name == 'core_batch':
             if isinstance(result, list):
                 exceptions = []
                 for i, item in enumerate(result):
                     try:
-                        await WialonCallResponseValidator.validate_result(f"core_batch[{i}]", item)
+                        await WialonCallRespValidator.validate_result(f"core_batch[{i}]", item)
                     except WialonError as err:
                         exceptions.append(err)
                 if len(exceptions) > 0:
                     raise WialonInvalidResult(exceptions, 'core_batch', result)
+
+
+__all__ = ['WialonCallRespValidator']

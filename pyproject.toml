@@ -34,7 +34,7 @@ classifiers = [
 dependencies = [
     "aiohttp",
     'aiolimiter',
-    "StrEnum; python_version <= '3.9'"
+    "strenum; python_version < '3.11'"
 ]
 
 dynamic = ["version"]
@@ -45,7 +45,7 @@ dynamic = ["version"]
 "Source" = "https://github.com/o-murphy/py-aiowialon"
 
 [project.optional-dependencies]
-dev = ["mypy"]
+dev = ["mypy", "pylint", "pytest", "build"]
 
 [tool.setuptools]
 py-modules = ["aiowialon"]

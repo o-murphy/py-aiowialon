@@ -21,8 +21,15 @@ def prepare_action_params(params: dict) -> dict:
         if isinstance(v, dict):
             new_params[new_key] = prepare_action_params(v)
         elif isinstance(v, list):
-            new_params[new_key] = [prepare_action_params(item) if isinstance(item, dict) else item for
-                                   item in v]
+            new_params[new_key] = [prepare_action_params(item)
+                                   if isinstance(item, dict)
+                                   else item for item in v]
         else:
             new_params[new_key] = v
     return new_params
+
+
+__all__ = (
+    'prepare_action_name',
+    'prepare_action_params'
+)

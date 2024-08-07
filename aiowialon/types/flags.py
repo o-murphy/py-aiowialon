@@ -1,5 +1,7 @@
-from enum import IntFlag
-from aiowialon.utils.compatibility import StrEnum
+from enum import IntFlag, IntEnum
+from aiowialon.utils.compat import StrEnum
+
+# pylint: disable=line-too-long
 
 
 class ItemType(StrEnum):
@@ -106,6 +108,7 @@ class AvlUserSubItem(StrEnum):
     ADMIN_FIELDS = "admin_fields"
 
 
+# pylint: disable=implicit-flag-alias
 class ItemDataFlag(IntFlag):
     # Base item information
     BASE = 0x00000001
@@ -292,6 +295,7 @@ class MessagesEventTypeFlags(IntFlag):
     REGISTERED_FILLING = 0x20  # 32, is set in addition to flag 0x2: registered filling
 
 
+# pylint: disable=implicit-flag-alias
 class AccessControlFlags(IntFlag):
     VIEW_BASIC_PROPS = 0x0001  # View item and its basic properties
     VIEW_DETAILED_PROPS = 0x0002  # View detailed item properties
@@ -367,7 +371,7 @@ class AccessControlFlags(IntFlag):
     EDIT_ROUTE_PROPS = 0x0000000100000  # Edit route properties
 
     # OTHER
-    All = 0xfffffffffffffff  # Sets all possible access flags to an item
+    ALL = 0xfffffffffffffff  # Sets all possible access flags to an item
 
 
 class TokenFlag(IntFlag):
@@ -459,7 +463,7 @@ class TokenFlag(IntFlag):
     EDIT_ADMIN_FIELDS = 8192  # 0x2000, Edit administrative fields
 
     # # Units and unit groups
-    # # 0x100000, Edit connectivity settings (device type, UID, phone, access password, messages filter)
+    # 0x100000, Edit connectivity settings (device type, UID, phone, access password, messages filter)
     EDIT_CONNECT_SETTINGS = 1048576
     CRUD_SENSORS = 2097152  # 0x200000, Create, edit, and delete sensors
     EDIT_COUNTERS = 4194304  # 0x400000, Edit counters
@@ -481,46 +485,57 @@ class TokenFlag(IntFlag):
     MANAGE_ACCOUNT = 4294967296  # 0x100000000, Manage account
 
 
-class BatchFlag(IntFlag):
+class BatchFlag(IntEnum):
     EXECUTE_ALL = 0
     STOP_ON_ERROR = 1
 
 
-# if __name__ == '__main__':
-#     # EXAMPLE
-#     def convert_api_description_to_enums():
-#         import re
-#
-#         api_description = """
-#         General
-#         Edit ACL propagated items	0x400	1024
-#         Units and unit groups
-#         View routes	0x4000000	67108864
-#         Create, edit, delete routes	0x8000000	134217728
-#         View events	0x1000000000	68719476736
-#         Create, edit, and delete events	0x2000000000	137438953472
-#         Use unit in jobs, notifications, routes, retranslators	0x8000000000	549755813888
-#         Resources (Accounts)
-#         Manage account	0x100000000	4294967296
-#         """
-#
-#         # pattern = r"(0x[0-9a-f]+)\s+(\d+)\s+(.+)"
-#
-#         # for i in re.findall(pattern, api_description):
-#         #     eid, intvalue, desc = i
-#         #     print(f"\t{desc.upper().replace(' ', '_')} = {eid}  # {intvalue}, {desc}")
-#
-#         # pattern = r"(0x[0-9a-f]+)\s+(.+)"
-#         #
-#         # for i in re.findall(pattern, api_description):
-#         #     eid, desc = i
-#         #     print(f"\t{desc.upper().replace(' ', '_')} = {eid}  # {desc}")
-#
-#         pattern = r"(.+)\s+(0x[0-9a-f]+)\s+(\d+)"
-#
-#         for i in re.findall(pattern, api_description):
-#             desc, eid, decval = i
-#             print(f"\t{desc.upper().replace(' ', '_')} = {decval}  # {eid}, {desc}")
-#
-#
-#     convert_api_description_to_enums()
+class ReportColumnValueType(IntEnum):
+    """
+    Refetence to https://sdk.wialon.com/wiki/en/sidebar/remoteapi/apiref/report/value_types
+
+    0	Unspecified text value
+    1	Address value
+    2	Unspecified custom <int> value
+    3	Unspecified custom <double> value
+    4	Counter value
+    10	Distance, in meters
+    20	Speed, in km/h
+    30	Time value (YYYY/MM/DD HH:MM:SS)
+    31	Time value (HH:MM::SS)
+    32	Time value (YYYY/MM/DD)
+    40	Time interval value, in seconds
+    41	Time interval value, in hours
+    42	Time interval value, in hours with 2 decimal places
+    50	Volume, in litres
+    51	Consumption, in litres/100km
+    52	Consumption, in litres/h
+    53	Consumption, in litres/ha
+    60	Percentage value
+    70	Area in hectares
+    72	Area in square meters
+    80	Information measurement - bytes, kbytes, mbytes
+    """
+    UNEXPECTED_TEXT_VALUE = 0
+    ADDRESS_VALUE = 1
+    """Operation completed successfully."""
+
+    UNSPECIFIED_CUSTOM_INT_VALUE = 2
+    UNSPECIFIED_CUSTOM_DOUBLE_VALUE = 3
+    COUNTER_VALUE = 4
+    DISTANCE_IN_METERS = 10
+    SPEED_IN_KMH = 20
+    TIME_YYYY_MM_DD__HH_MM_SS = 30
+    TIME_HH_MM_SS = 31
+    TIME_YYYY_MM_DD = 32
+    TIME_INTERVAL_VALUE_S = 40
+    TIME_INTERVAL_VALUE_H = 41
+    TIME_INTERVAL_VALUE_HH = 42
+    VOLUME_IN_LITRES = 50
+    CONSUMPTION_LITRES_PER_100KM = 51
+    CONSUMPTION_LITRES_PER_H = 52
+    CONSUMPTION_LITRES_PER_HA = 53
+    PERCENTAGE_VALUE = 60
+    AREA_IN_HA = 70
+    AREA_IN_SQUARE_METERS = 72
+    INFO_MEASUREMENT = 80
