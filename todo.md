@@ -19,3 +19,4 @@
 pip install mypy
 stubgen -m your_module -o output_directory
 ```
+# https://hst-api.wialon.com/wialon/ajax.html?sid=0297ff1137d8bd16e9b6af992308abf2&svc=exchange/export_json&params={"fileName": "test.wlp", "json": {}}

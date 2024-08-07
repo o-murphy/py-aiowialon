@@ -43,7 +43,7 @@ class Wialon:
         self._default_params: Dict = {}
         self._default_params.update(extra_params)
 
-        self.__base_url = f"{scheme}://{host}:{port if port else 433 if scheme == 'https' else 80}"
+        self.__base_url = f"{scheme}://{host}:{port if port else 443 if scheme == 'https' else 80}"
         self.__base_api_url: str = urljoin(self.__base_url, 'wialon/ajax.html')
 
         self.__handlers: Dict[str, AvlEventHandler] = {}
