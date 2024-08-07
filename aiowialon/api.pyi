@@ -1,12 +1,12 @@
 from aiowialon.types import AvlEventFilter, LoginCallback, LoginParams, LogoutCallback, flags
 from aiowialon.utils.compat import Unpack
-from typing import Any, Callable, Coroutine, Literal
+from typing import Any, Callable, Coroutine, Literal, Optional
 
 __all__ = ['Wialon']
 
 class Wialon:
     request_headers: dict
-    def __init__(self, scheme: Literal['https', 'http'] = 'https', host: str = 'hst-api.wialon.com', port: int = 443, token: str | None = None, requests_per_second: int = 10, **extra_params: Any) -> None: ...
+    def __init__(self, scheme: Literal['https', 'http'] = 'https', host: str = 'hst-api.wialon.com', port: int = None, token: str | None = None, requests_per_second: int = 10, **extra_params: Any) -> None: ...
     @property
     def token(self) -> str | None: ...
     @token.setter

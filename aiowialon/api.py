@@ -30,19 +30,20 @@ class Wialon:
 
     # pylint: disable=too-many-arguments
     def __init__(self, scheme: Literal['https', 'http'] = 'https',
-                 host: str = "hst-api.wialon.com", port: int = 443,
+                 host: str = "hst-api.wialon.com", port: Optional[int] = None,
                  token: Optional[str] = None,
                  requests_per_second: int = 10,
                  **extra_params: Any):
         """
-        Created the Wialon API object.
+        Creates the Wialon API client.
         """
+
         self._sid: Optional[str] = None
         self._token: Optional[str] = token
         self._default_params: Dict = {}
         self._default_params.update(extra_params)
 
-        self.__base_url = f'{scheme}://{host}:{port}'
+        self.__base_url = f"{scheme}://{host}:{port if port else 433 if scheme == 'https' else 80}"
         self.__base_api_url: str = urljoin(self.__base_url, 'wialon/ajax.html')
 
         self.__handlers: Dict[str, AvlEventHandler] = {}
