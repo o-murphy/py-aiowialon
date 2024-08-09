@@ -1,4 +1,5 @@
 from typing import Any, Dict
+import warnings
 
 import aiohttp
 
@@ -19,17 +20,21 @@ class WialonCallRespValidator:
             raise WialonError(code, reason, action_name, result)
 
     @staticmethod
-    async def validate_headers(action_name, response: aiohttp.ClientResponse) -> None:
-        response_headers = response.headers
-        content_type = response_headers.getone('Content-Type')
+    async def validate_headers(response: aiohttp.ClientResponse) -> None:
+        content_type = response.headers.get('Content-Type', None)
 
-        if content_type != 'application/json':
-            raise WialonInvalidResult(
-                f"Invalid response content type: "
-                f"expected 'application/json', got '{content_type}'",
-                action_name,
-                await response.read()
-            )
+        if not content_type:
+            warnings.warn(f"Cant recognize content type: {response.headers}")
+        elif content_type != 'application/json':
+            warnings.warn(f"Invalid response content type, "
+                          f"expected 'application/json', "
+                          f" '{response.headers.get('Content-Type')}'")
+            # raise WialonInvalidResult(
+            #     f"Invalid response content type: "
+            #     f"expected 'application/json', got '{content_type}'",
+            #     action_name,
+            #     await response.read()
+            # )
 
     @staticmethod
     async def validate_result(action_name: str, result: Any) -> None:
@@ -46,6 +51,20 @@ class WialonCallRespValidator:
                         exceptions.append(err)
                 if len(exceptions) > 0:
                     raise WialonInvalidResult(exceptions, 'core_batch', result)
+
+    @staticmethod
+    async def has_attachment(response: aiohttp.ClientResponse) -> bool:
+        content_type = response.headers.get('Content-Type', '').lower()
+        content_disposition = response.headers.get('Content-Disposition')
+        if content_disposition and 'attachment' in content_disposition.lower():
+            # # Extract filename using a regex
+            # match = re.search(r'filename="(.+)"', content_disposition)
+            # if match:
+            #     return True
+            return True
+        if 'application/octet-stream' in content_type or 'multipart/form-data' in content_type:
+            return True
+        return False
 
 
 __all__ = ['WialonCallRespValidator']

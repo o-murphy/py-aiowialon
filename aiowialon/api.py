@@ -16,6 +16,7 @@ from aiowialon.types import (AvlEventHandler, AvlEventFilter, AvlEvent,
                              AvlEventCallback, LogoutCallback)
 from aiowialon.types import LoginParams, LoginCallback
 from aiowialon.types import flags
+from aiowialon.types.multipart import MultipartField
 from aiowialon.utils import convention
 from aiowialon.utils.compat import Unpack
 from aiowialon.validators import WialonCallRespValidator
@@ -23,25 +24,21 @@ from aiowialon.validators import WialonCallRespValidator
 
 # pylint: disable=too-many-instance-attributes
 class Wialon:
-    request_headers: dict = {
-        'Accept-Encoding': 'gzip, deflate',
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
-
     # pylint: disable=too-many-arguments
     def __init__(self, scheme: Literal['https', 'http'] = 'https',
                  host: str = "hst-api.wialon.com", port: Optional[int] = None,
-                 token: Optional[str] = None,
-                 requests_per_second: int = 10,
-                 **extra_params: Any):
+                 token: Optional[str] = None, rps: int = 10):
         """
-        Creates the Wialon API client.
+        Creates the Wialon API client instance.
+        :param scheme: 'https/http'
+        :param host: IP/Url of the Wialon server where an API endpoint placed
+        :param port: Port of the Wialon server where an API endpoint placed
+        :param token: Wialon API Token
+        :param rps: Max requests per second
         """
 
         self._sid: Optional[str] = None
         self._token: Optional[str] = token
-        self._default_params: Dict = {}
-        self._default_params.update(extra_params)
 
         self.__base_url = f"{scheme}://{host}:{port if port else 443 if scheme == 'https' else 80}"
         self.__base_api_url: str = urljoin(self.__base_url, 'wialon/ajax.html')
@@ -54,7 +51,7 @@ class Wialon:
         self.__polling_task: Optional[asyncio.Task] = None
 
         self.__semaphore = asyncio.Semaphore(10)
-        self.__limiter: AsyncLimiter = AsyncLimiter(requests_per_second, 1)
+        self.__limiter: AsyncLimiter = AsyncLimiter(rps, 1)
 
     @property
     def token(self) -> Optional[str]:
@@ -63,12 +60,6 @@ class Wialon:
     @token.setter
     def token(self, token: str) -> None:
         self._token = token
-
-    def update_extra_params(self, **params: Any) -> None:
-        """
-        Updated the Wialon API default parameters.
-        """
-        self._default_params.update(params)
 
     def on_session_open(self,
                         callback: Optional[LoginCallback] = None) -> Optional[LoginCallback]:
@@ -91,6 +82,7 @@ class Wialon:
                 raise KeyError(f"Detected EventHandler duplicate {callback.__name__}")
             self.__handlers[callback.__name__] = handler
             return callback
+
         return wrapper
 
     async def _process_event_handlers(self, event: AvlEvent) -> None:
@@ -206,10 +198,7 @@ class Wialon:
             'params': payload,
             'sid': self._sid
         }
-
-        full_payload = self._default_params.copy()
-        full_payload.update(params)
-        return await self.request(action_name, self.__base_api_url, full_payload)
+        return await self.request(action_name, self.__base_api_url, params)
 
     @classmethod
     def _is_call(cls, coroutine: Coroutine[Any, Any, Any]) -> bool:
@@ -231,6 +220,25 @@ class Wialon:
             coroutine.close()
         return await self.core_batch(params=actions, flags=flags_)
 
+    async def multipart(self, call: Coroutine[Any, Any, Any],
+                        *fields: MultipartField) -> Any:
+        if not self._is_call(call) or not call.cr_frame:
+            raise TypeError("Coroutine is not an Wialon.call")
+        coroutine_locals = call.cr_frame.f_locals
+        action_name = coroutine_locals['action_name']
+        params = coroutine_locals['params']
+        call.close()
+        form_data = aiohttp.FormData(
+            {
+                'sid': self._sid,
+                'svc': convention.prepare_action_name(action_name),
+                'params': json.dumps(params)
+            }
+        )
+        for f in fields:
+            form_data.add_field(**f.dict())
+        return await self.request(action_name, self.__base_api_url, payload=form_data)
+
     def __getattr__(self, action_name: str):
         """
         Enable the calling of Wialon API methods through Python method calls
@@ -249,12 +257,14 @@ class Wialon:
                         trust_env=True,
                         trace_configs=[aiohttp_trace_config]) as session:
                     try:
-                        async with session.post(
-                                url=url,
-                                data=payload,
-                                headers=self.request_headers) as response:
+                        async with session.post(url=url, data=payload) as response:
+                            # response.raise_for_status()
+                            await WialonCallRespValidator.validate_headers(response)
+
+                            if await WialonCallRespValidator.has_attachment(response):
+                                return await response.content.read()
+
                             response_data = await response.read()
-                            await WialonCallRespValidator.validate_headers(action_name, response)
                             result = json.loads(response_data)
                             await WialonCallRespValidator.validate_result(action_name, result)
                             return result

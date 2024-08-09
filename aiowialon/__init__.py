@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Async Wialon Remote API wrapper for Python 3
+"""
 
 __author__ = "o-murphy"
 __copyright__ = (
