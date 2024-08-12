@@ -16,6 +16,7 @@
 - [ ] [Data format](https://sdk.wialon.com/wiki/en/sidebar/remoteapi/apiref/format/format)
 - [ ] Other flags/types
 - [ ] maybe Pydantic?
+- [ ] multiple sessions
 
 #### Notes:
 ```shell

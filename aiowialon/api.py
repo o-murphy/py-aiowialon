@@ -47,6 +47,7 @@ class Wialon:
 
         self._sid: Optional[str] = None
         self._token: Optional[str] = token
+        self._timeout: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=5)
 
         self.__base_url = f"{scheme}://{host}:{port if port else 443 if scheme == 'https' else 80}"
         self.__base_api_url: str = urljoin(self.__base_url, 'wialon/ajax.html')
@@ -72,6 +73,18 @@ class Wialon:
         """Update Wialon Remote API access token"""
 
         self._token = token
+
+    @property
+    def timeout(self) -> float:
+        """Get current Wialon Client request timeout"""
+        return self._timeout.total
+
+    @timeout.setter
+    def timeout(self, timeout: float) -> None:
+        """Set current Wialon Client request timeout"""
+        if not isinstance(timeout, (int, float)):
+            raise TypeError("timeout must be an instance of (int, float")
+        self._timeout = aiohttp.ClientTimeout(timeout)
 
     def on_session_open(self,
                         callback: Optional[LoginCallback] = None) -> Optional[LoginCallback]:
@@ -311,12 +324,14 @@ class Wialon:
         Can be used to perform direct requests for not declared methods,
         but not recommended
         """
-
+        if not action_name:
+            action_name = "undefined_action"
         async with self.__limiter:
             async with self.__semaphore:
                 async with aiohttp.ClientSession(
                         trust_env=True,
-                        trace_configs=[aiohttp_trace_config]) as session:
+                        trace_configs=[aiohttp_trace_config],
+                        timeout=self._timeout) as session:
                     try:
                         async with session.post(url=url, data=payload) as response:
                             # response.raise_for_status()

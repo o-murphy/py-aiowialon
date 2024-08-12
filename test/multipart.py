@@ -73,6 +73,3 @@ async def main():
     finally:
         await w.logout()
 
-if __name__ == '__main__':
-    w = Wialon()
-    asyncio.run(main())
