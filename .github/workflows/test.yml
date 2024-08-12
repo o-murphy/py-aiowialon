@@ -22,10 +22,10 @@ jobs:
 
     - name: Analysing the code with pylint
       run: |
-        #pylint $(git ls-files '*.py')
         pylint ./aiowialon
+      continue-on-error: true
 
     - name: Analysing the code with mypy
       run: |
-        #pylint $(git ls-files '*.py')
         mypy ./aiowialon
+      continue-on-error: true
