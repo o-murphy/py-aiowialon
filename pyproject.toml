@@ -12,8 +12,8 @@ authors = [
     { name="o-murphy", email="thehelixpg@gmail.com" },
 ]
 description = "Async Wialon Remote API wrapper for Python 3"
-requires-python = ">=3.9"
-keywords = ["async", "wialon", "wialon remote api", "gurtam"]
+requires-python = ">=3.8"
+keywords = ["asyncio", "wialon", "wialon remote api", "gurtam"]
 license = {file = "LICENSE"}
 classifiers = [
     "Intended Audience :: Developers",
@@ -31,7 +31,11 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 
-dependencies = ["aiohttp", "simplejson"]
+dependencies = [
+    "aiohttp",
+    'aiolimiter',
+    "strenum; python_version < '3.11'"
+]
 
 dynamic = ["version"]
 
@@ -39,6 +43,9 @@ dynamic = ["version"]
 "Homepage" = "https://github.com/o-murphy/py-aiowialon"
 "Bug Reports" = "https://github.com/o-murphy/py-aiowialon/issues"
 "Source" = "https://github.com/o-murphy/py-aiowialon"
+
+[project.optional-dependencies]
+dev = ["mypy", "pylint", "pytest", "build"]
 
 [tool.setuptools]
 py-modules = ["aiowialon"]

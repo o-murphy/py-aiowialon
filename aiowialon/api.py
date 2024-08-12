@@ -1,346 +1,368 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-try:
-    from builtins import str
-except:
-    str = lambda x: "%s" % x
+"""Async Wialon Remote API client implementation"""
 
-try:
-    import simplejson as json
-    assert json  # Silence potential warnings from static analysis tools
-except ImportError:
-    import json
-
-from urllib.parse import urljoin
 import asyncio
+import json
+import warnings
+from contextlib import suppress
+from typing import Callable, Coroutine, Dict, Optional, Any, Union, Literal, List
+from urllib.parse import urljoin
+
+import aiohttp
+from aiolimiter import AsyncLimiter
+
+from aiowialon.exceptions import WialonError, WialonRequestLimitExceededError, WialonWarning
+from aiowialon.logger import logger, aiohttp_trace_config
+from aiowialon.types import (AvlEventHandler, AvlEventFilter, AvlEvent,
+                             AvlEventCallback, LogoutCallback)
+from aiowialon.types import LoginParams, LoginCallback
+from aiowialon.types import flags
+from aiowialon.types.multipart import MultipartField
+from aiowialon.utils import convention
+from aiowialon.utils.compat import Unpack
+from aiowialon.validators import WialonCallRespValidator
 
 
-try:
-    import aiohttp
-    from aiohttp.client_exceptions import *
-except ImportError:
-    import aiohttp
-
-from typing import Callable, Coroutine
-
-
-class WialonError(Exception):
+# pylint: disable=too-many-instance-attributes
+class Wialon:
     """
-    Exception raised when an Wialon Remote API call fails due to a network
-    related error or for a Wialon specific reason.
+    Async Wialon Remote API client implementation,
+    use this for open connection and communicate with Wialon
     """
-    errors = {
-        1: 'Invalid session',
-        2: 'Invalid service',
-        3: 'Invalid result',
-        4: 'Invalid input',
-        5: 'Error performing request',
-        6: 'Unknow error',
-        7: 'Access denied',
-        8: 'Invalid user name or password',
-        9: 'Authorization server is unavailable, please try again later',
-        1001: 'No message for selected interval',
-        1002: 'Item with such unique property already exists',
-        1003: 'Only one request of given time is allowed at the moment'
-    }
 
-    def __init__(self, code, text):
-        self._text = text
-        self._code = code
-        try:
-            self._code = int(code)
-        except ValueError:
-            pass
-
-    def __unicode__(self):
-        explanation = self._text
-        if self._code in WialonError.errors:
-            explanation = " ".join([WialonError.errors[self._code], self._text])
-
-        message = u'{error} ({code})'.format(error=explanation, code=self._code)
-        return u'WialonError({message})'.format(message=message)
-
-    def __str__(self):
-        return self.__unicode__()
-
-    def __repr__(self):
-        return str(self)
-
-
-class Wialon(object):
-    request_headers = {
-        'Accept-Encoding': 'gzip, deflate'
-    }
-
-    def __init__(self, scheme='http', host="hst-api.wialon.com", port=80, token=None, sid=None, **extra_params):
+    # pylint: disable=too-many-arguments
+    def __init__(self, scheme: Literal['https', 'http'] = 'https',
+                 host: str = "hst-api.wialon.com", port: Optional[int] = None,
+                 token: Optional[str] = None, rps: int = 10):
         """
-        Created the Wialon API object.
+        Creates the Wialon API client instance.
+        :param scheme: 'https/http'
+        :param host: IP/Url of the Wialon server where an API endpoint placed
+        :param port: Port of the Wialon server where an API endpoint placed
+        :param token: Wialon API Token
+        :param rps: Max requests per second
         """
-        self._sid = sid
-        self._token = token
-        self.__default_params = {}
-        self.__default_params.update(extra_params)
-        self.__handlers = []
-        self._session_did_open = None
 
-        self.__base_url = (
-            '{scheme}://{host}:{port}'.format(
-                scheme=scheme,
-                host=host,
-                port=port
-            )
-        )
+        self._sid: Optional[str] = None
+        self._token: Optional[str] = token
+        self._timeout: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=5)
 
-        self.__base_api_url = urljoin(self.__base_url, 'wialon/ajax.html?')
+        self.__base_url = f"{scheme}://{host}:{port if port else 443 if scheme == 'https' else 80}"
+        self.__base_api_url: str = urljoin(self.__base_url, 'wialon/ajax.html')
+
+        self.__handlers: Dict[str, AvlEventHandler] = {}
+        self.__on_session_open: Optional[LoginCallback] = None
+        self.__on_session_close: Optional[LogoutCallback] = None
+
+        self.__running_lock = asyncio.Lock()
+        self.__polling_task: Optional[asyncio.Task] = None
+
+        self.__semaphore = asyncio.Semaphore(10)
+        self.__limiter: AsyncLimiter = AsyncLimiter(rps, 1)
 
     @property
-    def sid(self):
-        return self._sid
+    def token(self) -> Optional[str]:
+        """Get current Wialon Remote API access token"""
 
-    @sid.setter
-    def sid(self, value):
-        self._sid = value
-
-    @property
-    def token(self):
         return self._token
 
     @token.setter
-    def token(self, value):
-        self._token = value
+    def token(self, token: str) -> None:
+        """Update Wialon Remote API access token"""
 
-    def session_did_open(self, callback: Callable[[None], Coroutine]):
-        self._session_did_open = callback
+        self._token = token
 
-    def update_extra_params(self, **params):
+    @property
+    def timeout(self) -> float:
+        """Get current Wialon Client request timeout"""
+        return self._timeout.total
+
+    @timeout.setter
+    def timeout(self, timeout: float) -> None:
+        """Set current Wialon Client request timeout"""
+        if not isinstance(timeout, (int, float)):
+            raise TypeError("timeout must be an instance of (int, float")
+        self._timeout = aiohttp.ClientTimeout(timeout)
+
+    def on_session_open(self,
+                        callback: Optional[LoginCallback] = None) -> Optional[LoginCallback]:
         """
-        Updated the Wialon API default parameters.
+        Decorator to register callback when session open
+        WARNING: This decorator can set just single callback for each Wialon instance
         """
-        self.__default_params.update(params)
 
-    def event_handler(self, callback: object):
-        self.__handlers.append(callback)
+        if callback and not callable(callback):
+            raise TypeError(f"'on_session_open' callback must be a type of {LoginCallback}")
+        if self.__on_session_open is not None:
+            warnings.warn(
+                "'on_session_open' callback will be override with new one "
+                f"'{self.__on_session_open.__qualname__}' -> '{callback.__qualname__}'",
+                WialonWarning
+            )
+        self.__on_session_open = callback
+        return callback
 
-    def start_poling(self, token=None, timeout=2):
-        if token:
-            self.token = token
-        asyncio.run(self.poling(self.token, timeout))
+    def on_session_close(self,
+                         callback: Optional[LogoutCallback] = None) -> Optional[LogoutCallback]:
+        """
+        Decorator to register callback when session close
+        WARNING: This decorator can set just single callback for each Wialon instance
+        """
 
-    async def poling(self, token=None, timeout=2):
-        await self.token_login(token=token)
-        while self.sid:
-            response = await self.avl_evts()
-            await asyncio.gather(*[callback(WialonEvents(response)) for callback in self.__handlers])
+        if callback and not callable(callback):
+            raise TypeError(f"'on_session_close' callback must be a type of {LogoutCallback}")
+        if self.__on_session_close is not None:
+            warnings.warn(
+                "'on_session_close' callback will be override with new one "
+                f"'{self.__on_session_close.__qualname__}' -> '{callback.__qualname__}'",
+                WialonWarning
+            )
+        self.__on_session_close = callback
+        return callback
+
+    def avl_event_handler(self, filter_: Optional[AvlEventFilter] = None) -> Callable:
+        """
+        Decorator to register multiple AVL event handlers for current Wialon instance
+        Set callback and filter function to catch and process AVL events
+        """
+
+        def wrapper(callback: AvlEventCallback):
+            handler = AvlEventHandler(callback, filter_)
+            if callback.__name__ in self.__handlers:
+                raise KeyError(f"Detected EventHandler duplicate {callback.__name__}")
+            self.__handlers[callback.__name__] = handler
+            return callback
+
+        return wrapper
+
+    async def _process_event_handlers(self, event: AvlEvent) -> None:
+        """Process event handlers for current item"""
+
+        for _, handler in self.__handlers.items():
+            if await handler(event):
+                break
+
+    async def start_polling(self, timeout: Union[int, float] = 2,
+                            logout_finally: bool = True,
+                            **params: Unpack[LoginParams]) -> None:
+        """Open session and start polling avl events"""
+
+        if timeout < 1:
+            raise ValueError("Poling timeout have to be >= 1 second. "
+                             "No more than 10 'avl_evts' requests "
+                             "can be processed during 10 seconds")
+
+        async with self.__running_lock:
+
+            await self.login(**params)
+            self.__polling_task = asyncio.create_task(self._polling(timeout))
+            logger.info("Polling task started")
+            try:
+                await self.__polling_task
+            except asyncio.CancelledError:
+                logger.info("Polling task was canceled")
+            finally:
+                try:
+                    await self.stop_polling(logout_finally)
+                finally:
+                    logger.info("Wialon polling stopped")
+
+    async def stop_polling(self, logout: bool = False) -> None:
+        """Execute this method if you want to stop polling programmatically"""
+
+        if not self.__running_lock.locked():
+            raise RuntimeError("Polling is not started")
+
+        if self.__polling_task:
+            logger.info("Stopping polling task")
+            self.__polling_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self.__polling_task
+            self.__polling_task = None
+        if logout:
+            await self.logout()
+
+    async def login(self, **params: Unpack[LoginParams]) -> Dict[str, Any]:
+        """Manually login to Wialon with token or auth hash"""
+
+        token = params.get("token", None)
+        auth_hash = params.get("auth_hash", None)
+        if token and auth_hash:
+            raise ValueError("You can't use both token and auth_hash "
+                             "at the same time on login")
+
+        logger.info('Wialon login: %s', self.__base_url)
+        if auth_hash:
+            session_login = await self.core_use_auth_hash(**params)
+        else:
+            if token:
+                self.token = token
+            params['token'] = self.token
+            session_login = await self.token_login(**params)
+
+        if isinstance(session_login, dict):
+            self._sid = session_login['eid']
+            logger.debug("sid: %s", self._sid)
+            logger.info("Wialon session opened")
+        else:
+            raise TypeError(f"Unexpected login response: {session_login}")
+        if self.__on_session_open:
+            await self.__on_session_open(session_login)
+        return session_login
+
+    async def logout(self) -> Any:
+        """Attempt to logout"""
+
+        if self._sid:
+            logger.info("Wialon logout")
+            session_logout = await self.core_logout()
+            self._sid = None
+            if self.__on_session_close:
+                await self.__on_session_close(session_logout)
+            return session_logout
+
+    async def _polling(self, timeout: Union[int, float] = 2) -> None:
+        """Internal avl event polling loop"""
+
+        while self._sid:
+            try:
+                response = await self.avl_evts()
+                events = AvlEvent.parse_avl_events_response(response)
+                await asyncio.gather(*[self._process_event_handlers(event) for event in events])
+            except WialonRequestLimitExceededError as err:
+                logger.exception(err)
             await asyncio.sleep(timeout)
 
-    async def avl_evts(self):
-        """
-        Call avl_event request
-        """
+    async def avl_evts(self) -> Any:
+        """Call avl_event request"""
+        if self.__polling_task:
+            warnings.warn("Polling running, don't recommended to call 'avl_evts' manually",
+                          WialonWarning)
         url = urljoin(self.__base_url, 'avl_evts')
         params = {
-            'sid': self.sid
+            'sid': self._sid
         }
 
         return await self.request('avl_evts', url, params)
 
-    async def call(self, action_name, *argc, **kwargs):
-        """
-        Call the API method provided with the parameters supplied.
-        """
+    # pylint: disable=unused-argument
+    async def call(self, action_name: str, *args: Any, **params: Any) -> Any:
+        """Call the API method provided with the parameters supplied."""
 
-        if not kwargs:
-            # List params for batch
-            if isinstance(argc, tuple) and len(argc) == 1:
-                params = json.dumps(argc[0], ensure_ascii=False)
-            else:
-                params = json.dumps(argc, ensure_ascii=False)
-        else:
-            params = json.dumps(kwargs, ensure_ascii=False)
-
+        params = convention.prepare_action_params(params)
+        payload = json.dumps(params, ensure_ascii=False)
         params = {
-            'svc': action_name.replace('_', '/', 1),
-            'params': params,
-            'sid': self.sid
+            'svc': convention.prepare_action_name(action_name),
+            'params': payload,
+            'sid': self._sid
         }
+        return await self.request(action_name, self.__base_api_url, params)
 
-        all_params = self.__default_params.copy()
-        all_params.update(params)
-        return await self.request(action_name, self.__base_api_url, all_params)
+    @classmethod
+    def _is_call(cls, coroutine: Coroutine[Any, Any, Any]) -> bool:
+        """Internally check if coroutine is the 'Wialon.call()' method"""
 
-    async def token_login(self, token=None, *args, **kwargs):
-        if token:
-            self.token = token
-        kwargs['token'] = self.token
-        kwargs['appName'] = 'py-aiowialon'
-        sess = await self.call('token_login', *args, **kwargs)
-        if sess:
-            self.sid = sess['eid']
-        if self._session_did_open:
-            await self._session_did_open()
-        return sess
+        if coroutine.__qualname__ == cls.call.__qualname__:
+            return True
+        return False
 
-    async def request(self, action_name, url, payload):
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(url, data=payload, headers=self.request_headers) as response:
-                    response_data = await response.read()
-                    response_headers = response.headers
-                    content_type = response_headers.getone('Content-Type')
+    async def batch(self, *calls: Coroutine[Any, Any, Any],
+                    flags_: flags.BatchFlag = flags.BatchFlag.EXECUTE_ALL) -> List[Any]:
+        """Adapter method for list of 'Wialon.call()',
+         coroutines to collect them to single batch API Call"""
 
-                    try:
-                        if content_type == 'application/json':
-                            result = json.loads(response_data)
-                    except ValueError as e:
-                        raise WialonError(
-                            0,
-                            u"Invalid response from Wialon: {0}".format(e),
-                        )
+        actions = []
+        for coroutine in calls:
+            if not self._is_call(coroutine) or not coroutine.cr_frame:
+                raise TypeError("Coroutine is not an 'Wialon.call' instance")
+            coroutine_locals = coroutine.cr_frame.f_locals
+            actions.append({
+                'svc': convention.prepare_action_name(coroutine_locals['action_name']),
+                'params': coroutine_locals['params']
+            })
+            coroutine.close()
+        return await self.core_batch(params=actions, flags=flags_)
 
-                    if isinstance(result, dict) and 'error' in result and result['error'] > 0:
-                        raise WialonError(result['error'], action_name)
+    async def multipart(self, call: Coroutine[Any, Any, Any],
+                        *fields: MultipartField) -> Any:
+        """Adapter method for 'Wialon.call()' coroutine
+         to send multipart data to server"""
 
-                    errors = []
-                    if isinstance(result, list):
-                        # Check for batch errors
-                        for elem in result:
-                            if not isinstance(elem, dict):
-                                continue
-                            if "error" in elem:
-                                errors.append("%s (%d)" % (WialonError.errors[elem["error"]], elem["error"]))
+        if not self._is_call(call) or not call.cr_frame:
+            raise TypeError("Coroutine is not an Wialon.call")
+        coroutine_locals = call.cr_frame.f_locals
+        action_name = coroutine_locals['action_name']
+        params = coroutine_locals['params']
+        call.close()
+        form_data = aiohttp.FormData(
+            {
+                'sid': self._sid,
+                'svc': convention.prepare_action_name(action_name),
+                'params': json.dumps(params)
+            }
+        )
+        for f in fields:
+            form_data.add_field(**f.dict())
+        return await self.request(action_name, self.__base_api_url, payload=form_data)
 
-                    if errors:
-                        errors.append(action_name)
-                        raise WialonError(0, " ".join(errors))
-
-                    return result
-        except ClientResponseError as e:
-            raise WialonError(0, u"HTTP {code}".format(e.status))
-        except ClientConnectorError as e:
-            raise WialonError(0, str(e))
-
-        except Exception as err:
-            return err
-
-    def __getattr__(self, action_name):
+    def __getattr__(self, action_name: str):
         """
         Enable the calling of Wialon API methods through Python method calls
         of the same name.
         """
+
         def get(_self, *args, **kwargs):
             return self.call(action_name, *args, **kwargs)
 
         return get.__get__(self, object)
 
-    async def core_use_auth_hash(self, *args, **kwargs):
-        return await self.call('core_use_auth_hash', *args, *kwargs)
-
-
-class WialonEvents(object):
-    def __init__(self, evts):
-        self.__tm = evts['tm']
-        self.__events = evts['events']
-        self._data = {}
-        self.parse_events()
-
-    @property
-    def data(self):
-        return self._data
-
-    def parse_events(self):
-        for e in self.__events:
-            self._data[e['i']] = WialonEvent(self.__tm, e)
-
-
-class WialonEvent(object):
-    types = {'m': 'Message', 'u': 'Update', 'd': 'Delete'}
-
-    def __init__(self, tm, e):
-        self._tm = tm
-        self._e = e
-        self._item = e['i']
-        self._e_type = self.types[e['t']]
-        self._desc = e['d']
-
-    @property
-    def item(self):
-        return self._item
-
-    @property
-    def desc(self):
-        return self._desc
-
-    @property
-    def e_type(self):
-        return self._e_type
-
-
-if __name__ == '__main__':
-
-    async def main(host, token):
+    async def request(self, action_name: str, url: str, payload: Any) -> Any:
         """
-        Example of manual using
+        Base request method for Wialon API Client
+        Can be used to perform direct requests for not declared methods,
+        but not recommended
         """
+        if not action_name:
+            action_name = "undefined_action"
+        async with self.__limiter:
+            async with self.__semaphore:
+                async with aiohttp.ClientSession(
+                        trust_env=True,
+                        trace_configs=[aiohttp_trace_config],
+                        timeout=self._timeout) as session:
+                    try:
+                        async with session.post(url=url, data=payload) as response:
+                            # response.raise_for_status()
+                            await WialonCallRespValidator.validate_headers(response)
+
+                            if await WialonCallRespValidator.has_attachment(response):
+                                return await response.content.read()
+
+                            response_data = await response.read()
+                            result = json.loads(response_data)
+                            await WialonCallRespValidator.validate_result(action_name, result)
+                            return result
+                    except (aiohttp.ClientError, WialonError) as e:
+                        logger.exception(e)
+                        raise
+
+    @staticmethod
+    def help(service_name: str, action_name: str) -> None:
+        """
+        Open an interactive help for pair if service/action of Wialon Remote API
+        Example:
+            >>> Wialon.help('core', 'search_item')  # will open the help page
+        """
+
+        url = "https://sdk.wialon.com/wiki/en/sidebar/remoteapi/apiref/{service_name}/{action_name}"
         try:
-            wialon_api = Wialon(host=host)
-            result = await wialon_api.token_login(token=token)
-            wialon_api.sid = result['eid']
-            await wialon_api.avl_evts()
-            await wialon_api.core_logout()
-        except WialonError:
-            pass
+            # pylint: disable=import-outside-toplevel
+            import webbrowser
+            webbrowser.open(url.format(service_name=service_name, action_name=action_name))
+        except ImportError:
+            logger.info("Cannot open webbrowser: %s", url)
 
 
-    def run():
-        """
-        Poling example
-        """
-        from aiowialon import flags
-
-        wialon_session = Wialon(host='TEST HOST', token='TEST TOKEN')
-
-        async def session_did_open():
-            spec = {
-                'itemsType': 'avl_unit',
-                'propName': 'sys_name',
-                'propValueMask': '*',
-                'sortType': 'sys_name'
-            }
-            interval = {"from": 0, "to": 100}
-            units = await wialon_session.core_search_items(spec=spec, force=1, flags=5, **interval)
-            if 'items' in units:
-                ids = [u['id'] for u in units['items']]
-
-                spec = [
-                    {
-                        "type": "col",
-                        "data": ids,
-                        "flags": flags.ITEM_DATAFLAG_BASE + flags.ITEM_UNIT_DATAFLAG_POS,
-                        "mode": 0
-                    }
-                ]
-                await wialon_session.core_update_data_flags(spec=spec)
-
-        @wialon_session.event_handler
-        async def event_handler(events: WialonEvents):
-            if 116106 in events.data:
-                item_event: WialonEvent = events.data[116106]
-                print(item_event.item, item_event.e_type, item_event.desc)
-
-        @wialon_session.event_handler
-        async def event_handler(events: WialonEvents):
-            spec = {
-                'itemsType': 'avl_unit',
-                'propName': 'sys_name',
-                'propValueMask': '*',
-                'sortType': 'sys_name'
-            }
-            interval = {"from": 0, "to": 0}
-            units = await wialon_session.core_search_items(spec=spec, force=1, flags=5, **interval)
-            print(events.__dict__, units['totalItemsCount'])
-
-        wialon_session.session_did_open(callback=session_did_open)
-        wialon_session.start_poling()
-
-    run()
+__all__ = ['Wialon']
