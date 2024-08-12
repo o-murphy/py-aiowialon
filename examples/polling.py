@@ -1,11 +1,8 @@
 import asyncio
 import datetime
-
-from aiowialon.api import Wialon
-from aiowialon.exceptions import WialonError
-from aiowialon.types import flags
-from aiowialon.types.avl_events import AvlEvent
 import logging
+
+from aiowialon import Wialon, WialonError, flags, AvlEvent
 
 logging.basicConfig(level=logging.INFO)
 
