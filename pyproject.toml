@@ -12,8 +12,8 @@ authors = [
     { name="o-murphy", email="thehelixpg@gmail.com" },
 ]
 description = "Async Wialon Remote API wrapper for Python 3"
-requires-python = ">=3.9"
-keywords = ["async", "wialon", "wialon remote api", "gurtam"]
+requires-python = ">=3.8"
+keywords = ["asyncio", "wialon", "wialon remote api", "gurtam"]
 license = {file = "LICENSE"}
 classifiers = [
     "Intended Audience :: Developers",

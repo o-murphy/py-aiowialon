@@ -55,7 +55,7 @@ async def batch_example_with_errors_handling():
     )
     result = None
     try:
-        result = await wialon.batch(h, m, flags=flags.BatchFlag.STOP_ON_ERROR)
+        result = await wialon.batch(h, m, flags_=flags.BatchFlag.STOP_ON_ERROR)
         print("Result", result)
     except WialonError as err:
         print("Errors", err.reason)
@@ -65,4 +65,4 @@ async def batch_example_with_errors_handling():
 
 
 if __name__ == "__main__":
-    asyncio.run(wialon.start_polling(logout_finally=True))
+    asyncio.run(wialon.start_polling())

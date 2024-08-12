@@ -1,10 +1,14 @@
+"""Definitions of Wialon Remote API exceptions."""
 from typing import Optional, Any, Union, List
+
+# pylint: skip-file
 
 WialonErrorReason = Union[str, int, 'WialonError', List['WialonError']]
 
 
 class WialonError(Exception):
     """
+    Base Wialon exception class.
     Exception raised when a Wialon Remote API call fails due to a network
     related error or for a Wialon specific reason.
     """
@@ -275,5 +279,10 @@ WIALON_EXCEPTIONS = {
     2015: WialonSensorDeleteForbiddenError,
 }
 
-__all__ = ['WialonError']
+
+class WialonWarning(UserWarning):
+    """Wialon UserWarning"""
+
+
+__all__ = ['WialonError', 'WialonWarning']
 __all__ += [n.__name__ for n in WIALON_EXCEPTIONS.values()]

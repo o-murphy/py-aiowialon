@@ -1,5 +1,5 @@
 """
-Some adjustments to allow using python <3.12
+Compatibility module to allow using python <3.12
 """
 
 import sys
