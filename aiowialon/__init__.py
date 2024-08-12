@@ -16,7 +16,7 @@ __credits__ = [
     "Mike Turchunovich",
     "Dmytro Yaroshenko",
 ]
-__version__ = "1.3.0b0"
+__version__ = "1.3.0rc0"
 
 from aiowialon.logger import *
 from aiowialon.utils import *
