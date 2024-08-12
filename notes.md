@@ -17,10 +17,10 @@
 - [ ] Other flags/types
 - [ ] maybe Pydantic?
 - [ ] multiple sessions
+- [ ] example of export/import .wlp
 
-#### Notes:
+#### Autogenerate stubs:
 ```shell
-# autogenerate stubs
-pip install mypy
+pip install -e .[dev]
 stubgen -m your_module -o output_directory
 ```
