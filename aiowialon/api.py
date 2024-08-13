@@ -92,7 +92,18 @@ class Wialon:
 
     @property
     def session_lock(self) -> Callable:
-        """Decorator to set exclusive session access for long critical operations"""
+        """
+        Decorator to set exclusive session access for long critical operations
+
+        >>> # Example
+        >>> from aiowialon import Wialon
+        >>> wialon = Wialon()
+        >>>
+        >>> @wialon.avl_event_handler()
+        >>> @wialon.session_lock  # exclusive session lock for callback's frame
+        >>> async def unit_event(event: AvlEvent):
+        >>>     await wialon.core_search_item(id=event.data.i, flags=1)
+        """
 
         return self.__exclusive_session_lock.lock
 

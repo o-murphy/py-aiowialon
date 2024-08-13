@@ -39,7 +39,7 @@ async def register_avl_events(session_login):
 @wialon.avl_event_handler()
 @wialon.session_lock  # exclusive session lock for callback's frame
 async def unit_event(event: AvlEvent):
-    await wialon.core_search_item(id=734455, flags=1)
+    await wialon.core_search_item(id=event.data.i, flags=1)
     print("Handler got event:", event)
     for i in range(5):
         print("Waiting exclusive operation", i, "item:", event.data.i)
