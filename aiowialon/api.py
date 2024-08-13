@@ -7,7 +7,6 @@ import asyncio
 import json
 import warnings
 from contextlib import suppress
-from functools import wraps
 from typing import Callable, Coroutine, Dict, Optional, Any, Union, Literal, List
 from urllib.parse import urljoin
 
@@ -21,7 +20,7 @@ from aiowialon.types import (AvlEventHandler, AvlEventFilter, AvlEvent,
 from aiowialon.types import LoginParams, LoginCallback
 from aiowialon.types import flags
 from aiowialon.types.multipart import MultipartField
-from aiowialon.utils import convention
+from aiowialon.utils import ExclusiveAsyncLock, convention
 from aiowialon.utils.compat import Unpack
 from aiowialon.validators import WialonCallRespValidator
 
@@ -57,15 +56,13 @@ class Wialon:
         self.__on_session_open: Optional[LoginCallback] = None
         self.__on_session_close: Optional[LogoutCallback] = None
 
-        self.__polling_lock = asyncio.Lock()
+        self.__polling_lock: asyncio.Lock = asyncio.Lock()
         self.__polling_task: Optional[asyncio.Task] = None
 
-        self.__semaphore = asyncio.Semaphore(10)
+        self.__semaphore: asyncio.Semaphore = asyncio.Semaphore(10)
         self.__limiter: AsyncLimiter = AsyncLimiter(rps, 1)
 
-        self._session_lock = asyncio.Lock()
-        self._session_lock_event = asyncio.Event()
-        self._session_lock_event.set()
+        self.__exclusive_session_lock: ExclusiveAsyncLock = ExclusiveAsyncLock()
 
     @property
     def token(self) -> Optional[str]:
@@ -82,14 +79,22 @@ class Wialon:
     @property
     def timeout(self) -> float:
         """Get current Wialon Client request timeout"""
+
         return self._timeout.total
 
     @timeout.setter
     def timeout(self, timeout: float) -> None:
         """Set current Wialon Client request timeout"""
+
         if not isinstance(timeout, (int, float)):
             raise TypeError("timeout must be an instance of (int, float")
         self._timeout = aiohttp.ClientTimeout(timeout)
+
+    @property
+    def session_lock(self) -> Callable:
+        """Decorator to set exclusive session access for long critical operations"""
+
+        return self.__exclusive_session_lock.lock
 
     def on_session_open(self,
                         callback: Optional[LoginCallback] = None) -> Optional[LoginCallback]:
@@ -261,7 +266,6 @@ class Wialon:
     async def avl_evts(self) -> Any:
         """Call avl_event request"""
 
-        await self._session_lock_event.wait()
         if self.__polling_task:
             warnings.warn("Polling running, don't recommended to call 'avl_evts' manually",
                           WialonWarning)
@@ -269,14 +273,12 @@ class Wialon:
         params = {
             'sid': self._sid
         }
-        print('evt')
         return await self.request('avl_evts', url, params)
 
     # pylint: disable=unused-argument
     async def call(self, action_name: str, *args: Any, **params: Any) -> Any:
         """Call the API method provided with the parameters supplied."""
 
-        await self._session_lock_event.wait()
         params = convention.prepare_action_params(params)
         payload = json.dumps(params, ensure_ascii=False)
         params = {
@@ -316,7 +318,6 @@ class Wialon:
         """Adapter method for 'Wialon.call()' coroutine
          to send multipart data to server"""
 
-        await self._session_lock_event.wait()
         if not self._is_call(call) or not call.cr_frame:
             raise TypeError("Coroutine is not an Wialon.call")
         coroutine_locals = call.cr_frame.f_locals
@@ -351,6 +352,9 @@ class Wialon:
         Can be used to perform direct requests for not declared methods,
         but not recommended
         """
+
+        await self.__exclusive_session_lock.wait()
+
         if not action_name:
             action_name = "undefined_action"
         async with self.__limiter:
@@ -374,19 +378,6 @@ class Wialon:
                     except (aiohttp.ClientError, WialonError) as e:
                         logger.exception(e)
                         raise
-
-    def session_lock(self, func=None):
-        """Decorator to lock async loop for long critical operations"""
-
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            async with self._session_lock:
-                self._session_lock_event.clear()
-                try:
-                    return await func(*args, **kwargs)
-                finally:
-                    self._session_lock_event.set()
-        return wrapper
 
     @staticmethod
     def help(service_name: str, action_name: str) -> None:
