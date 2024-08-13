@@ -72,8 +72,9 @@ class AvlEventHandler:
     def __init__(self,
                  callback: AvlEventCallback,
                  filter_: Optional[AvlEventFilter] = None) -> None:
-        self._callback: AvlEventCallback = callback
-        self._filter: Optional[AvlEventFilter] = filter_
+        self._callback: AvlEventCallback
+        self._filter: Optional[AvlEventFilter]
+        self._tasks: List[asyncio.Task] = []
 
         self.callback = callback
         self.filter = filter_
@@ -87,29 +88,55 @@ class AvlEventHandler:
         """
 
         if not self._filter:
-            await self.__handle(event)
+            await self.__process_event(event)
             return True
         if self._filter is not None:
             if self._filter(event):
-                await self.__handle(event)
+                await self.__process_event(event)
                 return True
         return False
 
-    async def __handle(self, event: AvlEvent) -> None:
+    async def __process_event(self, event: AvlEvent) -> None:
         """
         Executes the callback function with handled AvlEvent,
-        suppressing the exceptions if callback raises it to prevent app braiking
+        suppressing the exceptions if callback raises it to prevent app breaking.
         """
 
         logger.info("Got AVL event %s", event)
-        try:
-            with suppress(asyncio.CancelledError):
-                await self._callback(event)
-        except asyncio.CancelledError:
-            logger.info("%s cancelled", self._callback.__name__)
-        except (WialonError, aiohttp.ClientError) as e:
-            logger.error("Exception happened on %s", self._callback.__name__)
-            logger.exception(e)
+        with suppress(asyncio.CancelledError):
+            # Wrap the callback with a try-except block to handle exceptions
+            async def wrapped_callback(event: AvlEvent):
+                try:
+                    await self._callback(event)
+                except (WialonError, aiohttp.ClientError) as e:
+                    logger.error("Exception happened in %s", self._callback.__name__)
+                    logger.exception(e)
+
+            callback_task = asyncio.create_task(
+                wrapped_callback(event),
+                name=f"AvlEventHandler ({len(self._tasks)}): {self._callback.__name__}"
+            )
+            self._tasks.append(callback_task)
+            callback_task.add_done_callback(self.__cleanup_task)
+
+    def __cleanup_task(self, task: asyncio.Task):
+        """Remove the task from the list once it's done"""
+
+        task.cancel()
+        with suppress(asyncio.CancelledError):
+            task.__await__()
+        if task in self._tasks:
+            self._tasks.remove(task)
+        logger.debug("Task completed and removed: %s", task.get_name())
+
+    async def cleanup(self):
+        """cleaning the AvlEventHandler tasks"""
+
+        logger.debug("Cleaning up AvlEventHandler: %s, cancelling all tasks",
+                     self._callback.__name__)
+        for task in self._tasks:
+            self.__cleanup_task(task)
+        logger.debug("All handler tasks cancelled")
 
     @property
     def callback(self) -> AvlEventCallback:
@@ -139,7 +166,7 @@ class AvlEventHandler:
 
         if filter_ and not callable(filter_):
             raise TypeError(f'AvlEventHandler.filter_ must be a type of {AvlEventFilter}')
-        self.filter_ = filter_
+        self._filter = filter_
 
 
 __all__ = (

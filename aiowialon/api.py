@@ -53,7 +53,7 @@ class Wialon:
         self.__base_url = f"{scheme}://{host}:{port if port else 443 if scheme == 'https' else 80}"
         self.__base_api_url: str = urljoin(self.__base_url, 'wialon/ajax.html')
 
-        self.__handlers: Dict[str, AvlEventHandler] = {}
+        self.__avl_event_handlers: Dict[str, AvlEventHandler] = {}
         self.__on_session_open: Optional[LoginCallback] = None
         self.__on_session_close: Optional[LogoutCallback] = None
 
@@ -135,19 +135,36 @@ class Wialon:
 
         def wrapper(callback: AvlEventCallback):
             handler = AvlEventHandler(callback, filter_)
-            if callback.__name__ in self.__handlers:
-                raise KeyError(f"Detected EventHandler duplicate {callback.__name__}")
-            self.__handlers[callback.__name__] = handler
+            if callback.__name__ in self.__avl_event_handlers:
+                raise KeyError(f"Detected AVLEventHandler duplicate {callback.__name__}")
+            self.__avl_event_handlers[callback.__name__] = handler
             return callback
 
         return wrapper
 
+    def remove_avl_event_handler(self, callback: [str, AvlEventCallback]):
+        """Manually remove AVL event handler"""
+
+        if callable(callback):
+            callback = callback.__name__
+        if isinstance(callback, str):
+            handler = self.__avl_event_handlers.pop(callback)
+            asyncio.create_task(handler.cleanup())
+        else:
+            warnings.warn(f"Can't remove AVL event handler: {callback}")
+
     async def _process_event_handlers(self, event: AvlEvent) -> None:
         """Process event handlers for current item"""
 
-        for _, handler in self.__handlers.items():
+        for _, handler in self.__avl_event_handlers.items():
             if await handler(event):
                 break
+
+    async def _cleanup_event_handlers(self) -> None:
+        """Cleanup event handlers"""
+
+        for _, handler in self.__avl_event_handlers.items():
+            await handler.cleanup()
 
     async def start_polling(self, timeout: Union[int, float] = 2,
                             logout_finally: bool = True,
@@ -183,6 +200,7 @@ class Wialon:
         if self.__polling_task:
             logger.info("Stopping polling task")
             self.__polling_task.cancel()
+            await self._cleanup_event_handlers()
             with suppress(asyncio.CancelledError):
                 await self.__polling_task
             self.__polling_task = None
@@ -242,6 +260,8 @@ class Wialon:
 
     async def avl_evts(self) -> Any:
         """Call avl_event request"""
+
+        await self._session_lock_event.wait()
         if self.__polling_task:
             warnings.warn("Polling running, don't recommended to call 'avl_evts' manually",
                           WialonWarning)
@@ -249,6 +269,7 @@ class Wialon:
         params = {
             'sid': self._sid
         }
+        print('evt')
         return await self.request('avl_evts', url, params)
 
     # pylint: disable=unused-argument
@@ -295,6 +316,7 @@ class Wialon:
         """Adapter method for 'Wialon.call()' coroutine
          to send multipart data to server"""
 
+        await self._session_lock_event.wait()
         if not self._is_call(call) or not call.cr_frame:
             raise TypeError("Coroutine is not an Wialon.call")
         coroutine_locals = call.cr_frame.f_locals

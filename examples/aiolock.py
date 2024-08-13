@@ -36,13 +36,15 @@ async def register_avl_events(session_login):
     return await wialon.core_update_data_flags(spec=spec)
 
 
-@wialon.avl_event_handler(lambda event: event.data.i == 734455)
+@wialon.avl_event_handler()
 @wialon.session_lock
 async def unit_event(event: AvlEvent):
     print("Handler got event:", event)
     for i in range(5):
-        print("Waiting lock release", i)
+        print("Waiting lock release", i, "item:", event.data.i)
         await asyncio.sleep(1)
+    # remove handler
+    wialon.remove_avl_event_handler(unit_event.__name__)
 
 
 if __name__ == "__main__":

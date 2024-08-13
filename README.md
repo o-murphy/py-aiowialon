@@ -312,7 +312,7 @@ wialon.start_polling(token=TOKEN, logout_finally=False)
 ### Critical requests execution
 Some requests to services like `Render`, `Reports`, `Messages` requires blocking other requests to be executed together per single session.
 * Use the `@wialon.lock_session` decorator to block async loop till your operation done
-* You can apply `@wialon.session_lock` also for handlers, order of decorators doesn't matter
+* You can apply `@wialon.session_lock` also for handlers
 * You can use `@wialon.session_lock` inside the methods when [inheriting Wialon](#extending-aio-wialon)
 
 ```python
