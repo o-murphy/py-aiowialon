@@ -309,24 +309,60 @@ wialon = Wialon()  # set custom requests per second limit
 wialon.start_polling(token=TOKEN, logout_finally=False)
 ```
 
-### Debugging
-Enable debug messages for `aiowialon` and `aiohttp`
+### Critical requests execution
+Some requests to services like `Render`, `Reports`, `Messages` requires blocking other requests to be executed together per single session.
+* Use the `@wialon.lock_session` decorator to block async loop till your operation done
+* You can apply `@wialon.session_lock` also for handlers, order of decorators doesn't matter
+* You can use `@wialon.session_lock` inside the methods when [inheriting Wialon](#extending-aio-wialon)
+
 ```python
-import logging
-from aiowialon import Wialon, WialonError, flags, AvlEvent
-logging.basicConfig(level=logging.DEBUG)
+import asyncio
+from functools import wraps
+
+from aiowialon import Wialon
+
+wialon = Wialon(token=TOKEN)
+
+@wialon.session_lock
+async def critical_method(self, params1, params2):
+  # For example: execute and export report
+  previous_request_timeout = self.timeout  # Store current timeout
+  try:
+    self.timeout = 600  # Setup request timeout up to 10 minutes
+    await self.report_exec_report(**params1)
+    self.timeout = previous_request_timeout  # Return previous timeout
+    report_result = await self.export_result(**params2)
+    return report_result
+  finally:
+    self.timeout = previous_request_timeout  # Return previous timeout
+    await self.report_cleanup_result()
 ```
+
+With handlers:
+```python
+@wialon.avl_event_handler(lambda event: event.data.i == 734455)
+@wialon.session_lock
+async def unit_event(event: AvlEvent):
+    print("Handler got event:", event)
+    # simulating long operation
+    for i in range(5):
+        print("Waiting lock release", i)
+        await asyncio.sleep(1)
+```
+
 
 ### Extending AIO Wialon
 Inherit from `Wialon` class to add your custom logic and behaviour
-You can directly use `Wialon.request` to make requests to special endpoints
+* You can directly use `Wialon.request` to make requests to special endpoints
+* You can use `@wialon.session_lock` inside the methods when inheriting Wialon
+
 
 ```python
 import json
+import asyncio
 from aiowialon import Wialon
 
-
-class WialonWithGeocode(Wialon):
+class CustomWialon(Wialon):
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
     self.__geocode_url = f"{kwargs.get('scheme', 'https')}://geocode-maps.wialon.com/{self.__base_url}/gis_geocode"
@@ -337,64 +373,24 @@ class WialonWithGeocode(Wialon):
       ...  # other fields
     }
     return await self.request('geocode_fetch', self.__geocode_url, payload=json.dumps(payload))
+
+  async def critical_method(self):
+      @self.session_lock
+      async def locked_task():
+          # simulating long operation
+          for i in range(5):
+              print("Waiting lock release", i)
+              await asyncio.sleep(1)
+      return await locked_task()
 ```
 
-### Critical requests execution
-Some requests to services like `Render`, `Reports`, `Messages` requires blocking other requests to be executed together per single session.
-Use asyncio lock globally for `Wialon` instance to execute critical requests.
-
+### Debugging
+Enable debug messages for `aiowialon` and `aiohttp`
 ```python
-import asyncio
-from functools import wraps
-
-from aiowialon import Wialon
-
-
-class WialonWithLock(Wialon):
-  def __init__(self, **kwargs):
-    super().__init__(**kwargs)
-    self._session_lock = asyncio.Lock()
-    self._session_lock_event = asyncio.Event()
-    self._session_lock_event.set()
-
-  def session_lock(self):
-    def decorator(func):
-      @wraps(func)
-      async def wrapper(self, *args, **kwargs):
-        async with self._session_lock:
-          # Clear the event to indicate that critical_method is running
-          self._session_lock_event.clear()
-          try:
-            result = await func(self, *args, **kwargs)
-          finally:
-            # Set the event to signal that critical_method is complete
-            self._session_lock_event.set()
-          return result
-
-      return wrapper
-
-    return decorator
-
-  async def call(self, *args, **params):
-    # Ensure that the method waits until critical_method completes
-    await self._session_lock_event.wait()
-    return await super().call(*args, **params)
-
-  @session_lock()
-  async def critical_method(self, params1, params2):
-    # For example: execute and export report
-    previous_request_timeout = self.timeout  # Store current timeout
-    try:
-      self.timeout = 600  # Setup request timeout up to 10 minutes
-      await self.report_exec_report(**params1)
-      self.timeout = previous_request_timeout  # Return previous timeout
-      report_result = await self.export_result(**params2)
-      return report_result
-    finally:
-      self.timeout = previous_request_timeout  # Return previous timeout
-      await self.report_cleanup_result()
+import logging
+from aiowialon import Wialon, WialonError, flags, AvlEvent
+logging.basicConfig(level=logging.DEBUG)
 ```
-
 
 > [!WARNING]
 > ### RISK NOTICE

@@ -7,6 +7,7 @@ import asyncio
 import json
 import warnings
 from contextlib import suppress
+from functools import wraps
 from typing import Callable, Coroutine, Dict, Optional, Any, Union, Literal, List
 from urllib.parse import urljoin
 
@@ -56,11 +57,15 @@ class Wialon:
         self.__on_session_open: Optional[LoginCallback] = None
         self.__on_session_close: Optional[LogoutCallback] = None
 
-        self.__running_lock = asyncio.Lock()
+        self.__polling_lock = asyncio.Lock()
         self.__polling_task: Optional[asyncio.Task] = None
 
         self.__semaphore = asyncio.Semaphore(10)
         self.__limiter: AsyncLimiter = AsyncLimiter(rps, 1)
+
+        self._session_lock = asyncio.Lock()
+        self._session_lock_event = asyncio.Event()
+        self._session_lock_event.set()
 
     @property
     def token(self) -> Optional[str]:
@@ -154,7 +159,7 @@ class Wialon:
                              "No more than 10 'avl_evts' requests "
                              "can be processed during 10 seconds")
 
-        async with self.__running_lock:
+        async with self.__polling_lock:
 
             await self.login(**params)
             self.__polling_task = asyncio.create_task(self._polling(timeout))
@@ -172,7 +177,7 @@ class Wialon:
     async def stop_polling(self, logout: bool = False) -> None:
         """Execute this method if you want to stop polling programmatically"""
 
-        if not self.__running_lock.locked():
+        if not self.__polling_lock.locked():
             raise RuntimeError("Polling is not started")
 
         if self.__polling_task:
@@ -244,13 +249,13 @@ class Wialon:
         params = {
             'sid': self._sid
         }
-
         return await self.request('avl_evts', url, params)
 
     # pylint: disable=unused-argument
     async def call(self, action_name: str, *args: Any, **params: Any) -> Any:
         """Call the API method provided with the parameters supplied."""
 
+        await self._session_lock_event.wait()
         params = convention.prepare_action_params(params)
         payload = json.dumps(params, ensure_ascii=False)
         params = {
@@ -347,6 +352,19 @@ class Wialon:
                     except (aiohttp.ClientError, WialonError) as e:
                         logger.exception(e)
                         raise
+
+    def session_lock(self, func=None):
+        """Decorator to lock async loop for long critical operations"""
+
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            async with self._session_lock:
+                self._session_lock_event.clear()
+                try:
+                    return await func(*args, **kwargs)
+                finally:
+                    self._session_lock_event.set()
+        return wrapper
 
     @staticmethod
     def help(service_name: str, action_name: str) -> None:
