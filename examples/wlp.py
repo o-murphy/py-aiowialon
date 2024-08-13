@@ -1,6 +1,6 @@
 import asyncio
 from aiowialon import Wialon
-from aiowialon.utils.shortcuts.wlp import WLP
+from aiowialon.shortcuts.wlp import WLP
 
 
 async def export_n_import_unit():

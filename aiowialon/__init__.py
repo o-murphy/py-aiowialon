@@ -24,3 +24,4 @@ from aiowialon.types import *
 from aiowialon.exceptions import *
 from aiowialon.api import *
 from aiowialon.validators import *
+from aiowialon.shortcuts import *

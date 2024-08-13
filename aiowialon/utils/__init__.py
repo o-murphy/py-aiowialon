@@ -2,5 +2,4 @@
 
 from .compat import *
 from .convention import *
-from .shortcuts import *
-from .exclusive_async_lock import *
+from .async_lock import *

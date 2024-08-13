@@ -17,10 +17,9 @@ from aiowialon.exceptions import WialonError, WialonRequestLimitExceededError, W
 from aiowialon.logger import logger, aiohttp_trace_config
 from aiowialon.types import (AvlEventHandler, AvlEventFilter, AvlEvent,
                              AvlEventCallback, LogoutCallback)
-from aiowialon.types import LoginParams, LoginCallback
-from aiowialon.types import flags
-from aiowialon.types.multipart import MultipartField
-from aiowialon.utils import ExclusiveAsyncLock, convention
+from aiowialon.types import LoginParams, LoginCallback, flags, MultipartField
+from aiowialon.utils.async_lock import ExclusiveAsyncLock
+from aiowialon.utils import convention
 from aiowialon.utils.compat import Unpack
 from aiowialon.validators import WialonCallRespValidator
 

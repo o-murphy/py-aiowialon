@@ -146,17 +146,19 @@ async def upload_driver_image():
 
 ### Shortcuts
 Shortcuts are available as efficient solutions for some common actions, like .wlp export
+
 ```python
 from aiowialon import Wialon
-from aiowialon.utils.shortcuts import WLP
+from aiowialon.shortcuts import WLP
 
 wialon = Wialon(token=TOKEN)
 
+
 async def dump_unit(item_id):
-    await wialon.login()
-    wlp = await WLP.export_item(wialon, item_id)
-    with open(f"{id}.wlp", 'wb') as fp:
-        fp.write(wlp)
+  await wialon.login()
+  wlp = await WLP.export_item(wialon, item_id)
+  with open(f"{id}.wlp", 'wb') as fp:
+    fp.write(wlp)
 ```
 
 ## Wialon Events
