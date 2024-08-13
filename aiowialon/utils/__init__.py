@@ -2,3 +2,4 @@
 
 from .compat import *
 from .convention import *
+from .shortcuts import *

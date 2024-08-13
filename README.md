@@ -11,6 +11,7 @@
   * [API Call Example](#api-call-example)
   * [Batch requests](#batch-requests)
   * [Multipart requests](#multipart-requests)
+  * [Shortcuts](#shortcuts)
 * [Wialon Events](#wialon-events)
   * [Register AVL Events](#register-avl-events)
   * [On login/logout](#on-loginlogout)
@@ -21,7 +22,7 @@
 * [Advanced](#advanced-usage)
   * [Limitations](#limitations)
   * [Prevent polling auto logout](#prevent-polling-logout)
-  * [Critical sections (Render, Reports, Messages)](#critical-sections)
+  * [Critical requests execution (Render, Reports, Messages)](#critical-requests-execution)
   * [Extending AIO Wialon](#extending-aio-wialon)
   * [Debugging](#debugging)
   
@@ -46,7 +47,7 @@ wialon = Wialon(host=HOST, token=TOKEN)
 if __name__ == "__main__":
     asyncio.run(wialon.start_polling())
 ```
-> [!Note]
+> [!TIP]
 > `Wialon.start_polling()` is not require a manual Wialon.login() call 
 
 ## Wialon API Call
@@ -74,6 +75,12 @@ async def main():
 
 asyncio.run(main())
 ```
+
+> [!WARNING]
+> Some Wialon Remote API methods requires a lock of asynchronous context 
+> (execution of reports, loading messages, etc). 
+> If you need these methods, 
+> it's highly recommended to get acquainted with [**Critical requests execution**](#critical-requests-execution) section
 
 ### Batch requests
 Use `Wialon.batch` instead of `asyncio.gather` to make multiple API calls in a same time.
@@ -137,6 +144,20 @@ async def upload_driver_image():
 > * Don't try to put multipart request into batch, it can raise unexpected behaviour
 > * Go to the [Wialon Remote Api documentation](http://sdk.wialon.com/wiki/en/sidebar/remoteapi/apiref/apiref) to get details
 
+### Shortcuts
+Shortcuts are available as efficient solutions for some common actions, like .wlp export
+```python
+from aiowialon import Wialon
+from aiowialon.utils.shortcuts import WLP
+
+wialon = Wialon(token=TOKEN)
+
+async def dump_unit(item_id):
+    await wialon.login()
+    wlp = await WLP.export_item(wialon, item_id)
+    with open(f"{id}.wlp", 'wb') as fp:
+        fp.write(wlp)
+```
 
 ## Wialon Events
 The library propose using the polling to handle AVL Events.
@@ -260,13 +281,14 @@ async def some_func():
 ```
 
 
-### Quick API Help
+## Quick API Help
 Use `Wialon.help(service_name, action_name)` to open Wialon Remote API docs in your system browser
 ```python
 from aiowialon import Wialon
 
 Wialon.help('core', 'search_item')
 ```
+
 
 ## Advanced usage
 
@@ -317,38 +339,60 @@ class WialonWithGeocode(Wialon):
     return await self.request('geocode_fetch', self.__geocode_url, payload=json.dumps(payload))
 ```
 
-### Critical sections
+### Critical requests execution
 Some requests to services like `Render`, `Reports`, `Messages` requires blocking other requests to be executed together per single session.
 Use asyncio lock globally for `Wialon` instance to execute critical requests.
 
 ```python
-import aiohttp
 import asyncio
+from functools import wraps
+
 from aiowialon import Wialon
 
 
 class WialonWithLock(Wialon):
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
-    self.session_lock = asyncio.Lock()
+    self._session_lock = asyncio.Lock()
+    self._session_lock_event = asyncio.Event()
+    self._session_lock_event.set()
 
+  def session_lock(self):
+    def decorator(func):
+      @wraps(func)
+      async def wrapper(self, *args, **kwargs):
+        async with self._session_lock:
+          # Clear the event to indicate that critical_method is running
+          self._session_lock_event.clear()
+          try:
+            result = await func(self, *args, **kwargs)
+          finally:
+            # Set the event to signal that critical_method is complete
+            self._session_lock_event.set()
+          return result
 
-wialon = WialonWithLock(token=TOKEN)
+      return wrapper
 
+    return decorator
 
-async def critical_func():
-  await wialon.login()
-  async with wialon.session_lock:
-    previous_request_timeout = wialon.timeout  # store current timeout
+  async def call(self, *args, **params):
+    # Ensure that the method waits until critical_method completes
+    await self._session_lock_event.wait()
+    return await super().call(*args, **params)
+
+  @session_lock()
+  async def critical_method(self, params1, params2):
+    # For example: execute and export report
+    previous_request_timeout = self.timeout  # Store current timeout
     try:
-      wialon.timeout = 600  # setup request timeout up to 10 minutes
-      await wialon.report_exec_report(**params1)
-      wialon.timeout = previous_request_timeout  # return previous timeout 
-      report_result = await wialon.export_result(**params2)
+      self.timeout = 600  # Setup request timeout up to 10 minutes
+      await self.report_exec_report(**params1)
+      self.timeout = previous_request_timeout  # Return previous timeout
+      report_result = await self.export_result(**params2)
       return report_result
     finally:
-      wialon.timeout = previous_request_timeout  # return previous timeout 
-      await wialon.report_cleanup_result()
+      self.timeout = previous_request_timeout  # Return previous timeout
+      await self.report_cleanup_result()
 ```
 
 

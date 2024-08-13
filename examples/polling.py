@@ -63,3 +63,6 @@ async def batch_example_with_errors_handling():
 
 if __name__ == "__main__":
     asyncio.run(wialon.start_polling())
+
+
+asyncio.Event().clear()

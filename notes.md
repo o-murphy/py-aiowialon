@@ -9,7 +9,7 @@
 - [x] add WialonError emitter (e.g. aiohttp.ClientResponse.raise_for_status(), use aiowialon.validators)
 - [x] wildcard imports (aka. __all__)
 - [x] update Docstrings
-- [ ] update README
+- [x] update README
 
 - [x] [Report column value types](https://sdk.wialon.com/wiki/en/sidebar/remoteapi/apiref/report/value_types)
 - [ ] [Other requests](https://sdk.wialon.com/wiki/en/sidebar/remoteapi/apiref/requests/requests)
@@ -17,7 +17,7 @@
 - [ ] Other flags/types
 - [ ] maybe Pydantic?
 - [ ] multiple sessions
-- [ ] example of export/import .wlp
+- [x] example of export/import .wlp (now in `shortcuts`)
 
 #### Autogenerate stubs:
 ```shell
