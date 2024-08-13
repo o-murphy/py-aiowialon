@@ -1,11 +1,11 @@
 """Shortcuts to export/import AVL Items to/from .wlp format"""
-
+import json
 from enum import IntEnum
 from typing import Any, Dict
 
 from aiowialon.api import Wialon
 from aiowialon.exceptions import WialonInvalidInput
-from aiowialon.types import flags
+from aiowialon.types import flags, MultipartField
 
 
 class WLP:
@@ -42,12 +42,22 @@ class WLP:
         return await client.exchange_export_json(fileName=f"{item['id']}", json=wlp_data)
 
     @staticmethod
-    async def import_item(client: Wialon, *args: Any, **kwargs: Any) -> Any:
+    async def import_item(client: Wialon, wlp: bytes) -> Any:
         """
         Creates a batch of requests for import AVL item data from .wlp to the server
         :param client: Wialon client instance
+        :param wlp: content of .wlp in bytes representation
         """
-        raise NotImplementedError("Not implemented")
+        event_hash = "ImportAvlItem"
+        file_name = "import.wlp"
+        return await client.multipart(
+            client.exchange_import_json(eventHash=event_hash),
+            MultipartField(name='eventHash', value=event_hash),
+            MultipartField(name='import_file',
+                           value=wlp,
+                           filename=file_name,
+                           content_type='application/zip')
+        )
 
     @staticmethod
     async def _fetch_user_wlp(client: Wialon, item: Dict[str, Any]) -> Dict[str, Any]:
