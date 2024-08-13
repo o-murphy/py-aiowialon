@@ -1,5 +1,4 @@
 """Shortcuts to export/import AVL Items to/from .wlp format"""
-import json
 from enum import IntEnum
 from typing import Any, Dict
 
