@@ -16,8 +16,9 @@
 - [ ] [Data format](https://sdk.wialon.com/wiki/en/sidebar/remoteapi/apiref/format/format)
 - [ ] Other flags/types
 - [ ] maybe Pydantic?
-- [ ] multiple sessions
+- [ ] multiple sessions?
 - [x] example of export/import .wlp (now in `shortcuts`)
+- [x] added exclusive async lock for long critical operations
 
 #### Autogenerate stubs:
 ```shell

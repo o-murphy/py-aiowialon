@@ -17,9 +17,8 @@ from aiowialon.exceptions import WialonError, WialonRequestLimitExceededError, W
 from aiowialon.logger import logger, aiohttp_trace_config
 from aiowialon.types import (AvlEventHandler, AvlEventFilter, AvlEvent,
                              AvlEventCallback, LogoutCallback)
-from aiowialon.types import LoginParams, LoginCallback
-from aiowialon.types import flags
-from aiowialon.types.multipart import MultipartField
+from aiowialon.types import LoginParams, LoginCallback, flags, MultipartField
+from aiowialon.utils.async_lock import ExclusiveAsyncLock
 from aiowialon.utils import convention
 from aiowialon.utils.compat import Unpack
 from aiowialon.validators import WialonCallRespValidator
@@ -52,15 +51,17 @@ class Wialon:
         self.__base_url = f"{scheme}://{host}:{port if port else 443 if scheme == 'https' else 80}"
         self.__base_api_url: str = urljoin(self.__base_url, 'wialon/ajax.html')
 
-        self.__handlers: Dict[str, AvlEventHandler] = {}
+        self.__avl_event_handlers: Dict[str, AvlEventHandler] = {}
         self.__on_session_open: Optional[LoginCallback] = None
         self.__on_session_close: Optional[LogoutCallback] = None
 
-        self.__running_lock = asyncio.Lock()
+        self.__polling_lock: asyncio.Lock = asyncio.Lock()
         self.__polling_task: Optional[asyncio.Task] = None
 
-        self.__semaphore = asyncio.Semaphore(10)
+        self.__semaphore: asyncio.Semaphore = asyncio.Semaphore(10)
         self.__limiter: AsyncLimiter = AsyncLimiter(rps, 1)
+
+        self.__exclusive_session_lock: ExclusiveAsyncLock = ExclusiveAsyncLock()
 
     @property
     def token(self) -> Optional[str]:
@@ -77,14 +78,33 @@ class Wialon:
     @property
     def timeout(self) -> float:
         """Get current Wialon Client request timeout"""
+
         return self._timeout.total
 
     @timeout.setter
     def timeout(self, timeout: float) -> None:
         """Set current Wialon Client request timeout"""
+
         if not isinstance(timeout, (int, float)):
             raise TypeError("timeout must be an instance of (int, float")
         self._timeout = aiohttp.ClientTimeout(timeout)
+
+    @property
+    def session_lock(self) -> Callable:
+        """
+        Decorator to set exclusive session access for long critical operations
+
+        >>> # Example
+        >>> from aiowialon import Wialon
+        >>> wialon = Wialon()
+        >>>
+        >>> @wialon.avl_event_handler()
+        >>> @wialon.session_lock  # exclusive session lock for callback's frame
+        >>> async def unit_event(event: AvlEvent):
+        >>>     await wialon.core_search_item(id=event.data.i, flags=1)
+        """
+
+        return self.__exclusive_session_lock.lock
 
     def on_session_open(self,
                         callback: Optional[LoginCallback] = None) -> Optional[LoginCallback]:
@@ -129,20 +149,50 @@ class Wialon:
         """
 
         def wrapper(callback: AvlEventCallback):
+            """
+            TODO: maybe add special attribute to callback
+            setattr(callback, 'unregister', lambda: self.remove_avl_event_handler(callback))
+            >>> @wialon.avl_event_handler()
+            >>> @wialon.session_lock  # exclusive session lock for callback's frame
+            >>> async def unit_event(event: AvlEvent):
+            >>>     # create some request with event hash
+            >>>     await wialon.avl_evts(event)
+            >>>     unit_event.unregister()  # to be honest that executes just once
+            """
             handler = AvlEventHandler(callback, filter_)
-            if callback.__name__ in self.__handlers:
-                raise KeyError(f"Detected EventHandler duplicate {callback.__name__}")
-            self.__handlers[callback.__name__] = handler
+            if callback.__name__ in self.__avl_event_handlers:
+                raise KeyError(f"Detected AVLEventHandler duplicate {callback.__name__}")
+            self.__avl_event_handlers[callback.__name__] = handler
             return callback
 
         return wrapper
 
+    def remove_avl_event_handler(self, callback: Union[str, AvlEventCallback]):
+        """
+        Manually remove AVL event handler
+        :param callback: AvlEventCallback or its string name
+        """
+
+        if callable(callback):
+            callback = callback.__name__
+        if isinstance(callback, str):
+            handler = self.__avl_event_handlers.pop(callback)
+            handler.cleanup()
+        else:
+            warnings.warn(f"Can't remove AVL event handler: {callback}")
+
     async def _process_event_handlers(self, event: AvlEvent) -> None:
         """Process event handlers for current item"""
 
-        for _, handler in self.__handlers.items():
+        for _, handler in self.__avl_event_handlers.items():
             if await handler(event):
                 break
+
+    async def _cleanup_event_handlers(self) -> None:
+        """Cleanup event handlers"""
+
+        for _, handler in self.__avl_event_handlers.items():
+            handler.cleanup()
 
     async def start_polling(self, timeout: Union[int, float] = 2,
                             logout_finally: bool = True,
@@ -154,7 +204,7 @@ class Wialon:
                              "No more than 10 'avl_evts' requests "
                              "can be processed during 10 seconds")
 
-        async with self.__running_lock:
+        async with self.__polling_lock:
 
             await self.login(**params)
             self.__polling_task = asyncio.create_task(self._polling(timeout))
@@ -172,12 +222,13 @@ class Wialon:
     async def stop_polling(self, logout: bool = False) -> None:
         """Execute this method if you want to stop polling programmatically"""
 
-        if not self.__running_lock.locked():
+        if not self.__polling_lock.locked():
             raise RuntimeError("Polling is not started")
 
         if self.__polling_task:
             logger.info("Stopping polling task")
             self.__polling_task.cancel()
+            await self._cleanup_event_handlers()
             with suppress(asyncio.CancelledError):
                 await self.__polling_task
             self.__polling_task = None
@@ -237,6 +288,7 @@ class Wialon:
 
     async def avl_evts(self) -> Any:
         """Call avl_event request"""
+
         if self.__polling_task:
             warnings.warn("Polling running, don't recommended to call 'avl_evts' manually",
                           WialonWarning)
@@ -244,7 +296,6 @@ class Wialon:
         params = {
             'sid': self._sid
         }
-
         return await self.request('avl_evts', url, params)
 
     # pylint: disable=unused-argument
@@ -259,14 +310,6 @@ class Wialon:
             'sid': self._sid
         }
         return await self.request(action_name, self.__base_api_url, params)
-
-    @classmethod
-    def _is_call(cls, coroutine: Coroutine[Any, Any, Any]) -> bool:
-        """Internally check if coroutine is the 'Wialon.call()' method"""
-
-        if coroutine.__qualname__ == cls.call.__qualname__:
-            return True
-        return False
 
     async def batch(self, *calls: Coroutine[Any, Any, Any],
                     flags_: flags.BatchFlag = flags.BatchFlag.EXECUTE_ALL) -> List[Any]:
@@ -307,6 +350,14 @@ class Wialon:
             form_data.add_field(**f.dict())
         return await self.request(action_name, self.__base_api_url, payload=form_data)
 
+    @classmethod
+    def _is_call(cls, coroutine: Coroutine[Any, Any, Any]) -> bool:
+        """Internally check if coroutine is the 'Wialon.call()' method"""
+
+        if coroutine.__qualname__ == cls.call.__qualname__:
+            return True
+        return False
+
     def __getattr__(self, action_name: str):
         """
         Enable the calling of Wialon API methods through Python method calls
@@ -324,6 +375,9 @@ class Wialon:
         Can be used to perform direct requests for not declared methods,
         but not recommended
         """
+
+        await self.__exclusive_session_lock.wait()
+
         if not action_name:
             action_name = "undefined_action"
         async with self.__limiter:
