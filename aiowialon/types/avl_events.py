@@ -129,7 +129,7 @@ class AvlEventHandler:
             self._tasks.remove(task)
         logger.debug("Task completed and removed: %s", task.get_name())
 
-    async def cleanup(self):
+    def cleanup(self):
         """cleaning the AvlEventHandler tasks"""
 
         logger.debug("Cleaning up AvlEventHandler: %s, cancelling all tasks",

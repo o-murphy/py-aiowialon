@@ -45,7 +45,7 @@ async def unit_event(event: AvlEvent):
         print("Waiting exclusive operation", i, "item:", event.data.i)
         await asyncio.sleep(1)
     # remove handler
-    # wialon.remove_avl_event_handler(unit_event.__name__)
+    # wialon.remove_avl_event_handler(unit_event)
 
 
 if __name__ == "__main__":

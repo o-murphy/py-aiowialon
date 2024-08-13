@@ -12,7 +12,7 @@ class ExclusiveAsyncLock:
     for exclusive access
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._lock: asyncio.Lock = asyncio.Lock()
         self._lock_event: asyncio.Event = asyncio.Event()
         self._lock_event.set()

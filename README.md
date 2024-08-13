@@ -230,18 +230,21 @@ Use `@wialon.avl_event_handler()` decorator
 ```python
 from aiowialon import AvlEvent
 
+
 @wialon.avl_event_handler()
 async def unit_event(event: AvlEvent):
-    print("Handler got event:", event)
+  print("Handler got event:", event)
 ```
 
 Put the filter function to the decorator to apply filtering of AVL events
+
 ```python
 from aiowialon import AvlEvent
 
+
 @wialon.avl_event_handler(lambda event: event.data.i == 734455)
 async def unit_734455_event(event: AvlEvent):
-    print("Handler got event from item 734455:", event)
+  print("Handler got event from item 734455:", event)
 ```
 > [!NOTE]
 > Register handlers in an order in which filters have to be applied. If some handler catched the event, next handler in order will never do.
@@ -256,14 +259,15 @@ So if u want to handle some specific WialonError, do it in handler's callback sc
 ```python
 from aiowialon import WialonError, WialonAccessDenied
 
+
 @wialon.avl_event_handler()
 async def unit_event(event: AvlEvent):
-    try:
-        raise WialonAccessDenied  # example of wialon exception raised in callback scope
-    except WialonError as err:
-        # do something
-        pass
-    
+  try:
+    raise WialonAccessDenied  # example of wialon exception raised in callback scope
+  except WialonError as err:
+    # do something
+    pass
+
 ```
 
 ### Exceptions Handling (Batch)
@@ -341,15 +345,16 @@ async def critical_method(self, params1, params2):
 ```
 
 With handlers:
+
 ```python
 @wialon.avl_event_handler(lambda event: event.data.i == 734455)
 @wialon.session_lock
 async def unit_event(event: AvlEvent):
-    print("Handler got event:", event)
-    # simulating long operation
-    for i in range(5):
-        print("Waiting lock release", i)
-        await asyncio.sleep(1)
+  print("Handler got event:", event)
+  # simulating long operation
+  for i in range(5):
+    print("Waiting lock release", i)
+    await asyncio.sleep(1)
 ```
 
 

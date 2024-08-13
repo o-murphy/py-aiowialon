@@ -149,6 +149,16 @@ class Wialon:
         """
 
         def wrapper(callback: AvlEventCallback):
+            """
+            TODO: maybe add special attribute to callback
+            setattr(callback, 'unregister', lambda: self.remove_avl_event_handler(callback))
+            >>> @wialon.avl_event_handler()
+            >>> @wialon.session_lock  # exclusive session lock for callback's frame
+            >>> async def unit_event(event: AvlEvent):
+            >>>     # create some request with event hash
+            >>>     await wialon.avl_evts(event)
+            >>>     unit_event.unregister()  # to be honest that executes just once
+            """
             handler = AvlEventHandler(callback, filter_)
             if callback.__name__ in self.__avl_event_handlers:
                 raise KeyError(f"Detected AVLEventHandler duplicate {callback.__name__}")
@@ -157,14 +167,17 @@ class Wialon:
 
         return wrapper
 
-    def remove_avl_event_handler(self, callback: [str, AvlEventCallback]):
-        """Manually remove AVL event handler"""
+    def remove_avl_event_handler(self, callback: Union[str, AvlEventCallback]):
+        """
+        Manually remove AVL event handler
+        :param callback: AvlEventCallback or its string name
+        """
 
         if callable(callback):
             callback = callback.__name__
         if isinstance(callback, str):
             handler = self.__avl_event_handlers.pop(callback)
-            asyncio.create_task(handler.cleanup())
+            handler.cleanup()
         else:
             warnings.warn(f"Can't remove AVL event handler: {callback}")
 
@@ -179,7 +192,7 @@ class Wialon:
         """Cleanup event handlers"""
 
         for _, handler in self.__avl_event_handlers.items():
-            await handler.cleanup()
+            handler.cleanup()
 
     async def start_polling(self, timeout: Union[int, float] = 2,
                             logout_finally: bool = True,
@@ -298,14 +311,6 @@ class Wialon:
         }
         return await self.request(action_name, self.__base_api_url, params)
 
-    @classmethod
-    def _is_call(cls, coroutine: Coroutine[Any, Any, Any]) -> bool:
-        """Internally check if coroutine is the 'Wialon.call()' method"""
-
-        if coroutine.__qualname__ == cls.call.__qualname__:
-            return True
-        return False
-
     async def batch(self, *calls: Coroutine[Any, Any, Any],
                     flags_: flags.BatchFlag = flags.BatchFlag.EXECUTE_ALL) -> List[Any]:
         """Adapter method for list of 'Wialon.call()',
@@ -344,6 +349,14 @@ class Wialon:
         for f in fields:
             form_data.add_field(**f.dict())
         return await self.request(action_name, self.__base_api_url, payload=form_data)
+
+    @classmethod
+    def _is_call(cls, coroutine: Coroutine[Any, Any, Any]) -> bool:
+        """Internally check if coroutine is the 'Wialon.call()' method"""
+
+        if coroutine.__qualname__ == cls.call.__qualname__:
+            return True
+        return False
 
     def __getattr__(self, action_name: str):
         """
