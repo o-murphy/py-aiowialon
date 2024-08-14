@@ -1,6 +1,8 @@
 import asyncio
 import logging
 
+import aiohttp
+
 from aiowialon import Wialon, flags, AvlEvent
 
 logging.basicConfig(level=logging.INFO)
@@ -37,9 +39,14 @@ async def register_avl_events(session_login):
 
 
 @wialon.avl_event_handler()
+# @wialon.avl_event_once
 @wialon.session_lock  # exclusive session lock for callback's frame
+# @wialon.request_timeout(10)
 async def unit_event(event: AvlEvent):
-    await wialon.core_search_item(id=event.data.i, flags=1)
+    try:
+        await wialon.wait(wialon.core_search_item(id=event.data.i, flags=1), 0.0001)
+    except TimeoutError as err:
+        print(err)
     print("Handler got event:", event)
     for i in range(5):
         print("Waiting exclusive operation", i, "item:", event.data.i)

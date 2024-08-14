@@ -16,6 +16,9 @@
   * [Register AVL Events](#register-avl-events)
   * [On login/logout](#on-loginlogout)
   * [AVL Events Handling](#avl-events-handling)
+    * [Register AVL Events handler](#register-avl-events-handlers)
+    * [Remove AVL Events handler](#remove-avl-events-handlers)
+    * [Disposable handlers](#disposable-handlers)
 * [Exceptions Handling](#exceptions-handling)
   * [Get exception results, batch exceptions](#exceptions-handling-batch)
 * [Quick API Help](#quick-api-help)
@@ -227,6 +230,7 @@ async def on_session_close(session_logout):
 After polling start and AVL Items registered for polling we can handle the AVL Events.
 Use `@wialon.avl_event_handler()` decorator
 
+#### Register AVL Events handlers
 ```python
 from aiowialon import AvlEvent
 
@@ -248,6 +252,23 @@ async def unit_734455_event(event: AvlEvent):
 ```
 > [!NOTE]
 > Register handlers in an order in which filters have to be applied. If some handler catched the event, next handler in order will never do.
+
+#### Remove AVL Events handlers
+```python
+# use them as you need
+wialon.remove_avl_event_handler('handler_name')
+wialon.remove_avl_event_handler(handler_func)
+```
+
+#### Disposable handlers
+Use `@wialon.avl_event_once` to be certain that handler will be removed immediately after single execution
+```python
+@wialon.avl_event_handler()
+@wialon.avl_event_once
+async def unit_event(event: AvlEvent):
+    print("Handler got event:", event)
+```
+
 
 ## Exceptions Handling
 The avl_event_handler suppress the callback's WialonError exceptions to protect app to be closed on unexpected behaviour
