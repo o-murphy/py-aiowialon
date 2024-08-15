@@ -1,8 +1,5 @@
 [![SWUbanner]][SWUdocs]
 
-[![🧪 GitHub Actions CI/CD workflow tests badge]][GHA workflow runs list]
-[![pre-commit.ci status badge]][pre-commit.ci results page]
-
 [SWUbanner]:
 https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner-direct-single.svg
 [SWUdocs]:
