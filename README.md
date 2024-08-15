@@ -1,3 +1,15 @@
+[![SWUbanner]][SWUdocs]
+
+[![🧪 GitHub Actions CI/CD workflow tests badge]][GHA workflow runs list]
+[![pre-commit.ci status badge]][pre-commit.ci results page]
+
+[SWUbanner]:
+https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner-direct-single.svg
+[SWUdocs]:
+https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md
+
+
+
 # AIO Wialon
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://opensource.org/licenses/MIT)
 [![pypi version](https://img.shields.io/pypi/v/py-aiowialon)](https://pypi.org/project/py-aiowialon/)
