@@ -1,7 +1,8 @@
 import asyncio
 import logging
+from datetime import datetime
 
-from aiowialon import Wialon, flags, AvlEvent
+from aiowialon import Wialon, flags, AvlEvent, WialonError
 
 logging.basicConfig(level=logging.INFO)
 
@@ -14,6 +15,7 @@ class WialonWithCriticalMethod(Wialon):
             for i in range(5):
                 print("Waiting lock release", i)
                 await asyncio.sleep(1)
+
         return await locked_task()
 
 
@@ -37,15 +39,22 @@ async def register_avl_events(session_login):
 
 
 @wialon.avl_event_handler()
-@wialon.session_lock  # exclusive session lock for callback's frame
+@wialon.session_lock
 async def unit_event(event: AvlEvent):
-    await wialon.core_search_item(id=event.data.i, flags=1)
-    print("Handler got event:", event)
+    try:
+        await wialon.wait(wialon.messages_load_last(
+            itemId=event.data.i,
+            lastTime=event.tm,
+            lastCount=10000,
+            flags=0x0000,
+            flagsMask=0xFF00,
+            loadCount=10000
+        ), 10)
+    except (TimeoutError, WialonError) as err:
+        print(err)
     for i in range(5):
         print("Waiting exclusive operation", i, "item:", event.data.i)
         await asyncio.sleep(1)
-    # remove handler
-    # wialon.remove_avl_event_handler(unit_event)
 
 
 if __name__ == "__main__":

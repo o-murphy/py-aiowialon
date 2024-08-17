@@ -7,6 +7,7 @@ import asyncio
 import json
 import warnings
 from contextlib import suppress
+from functools import wraps
 from typing import Callable, Coroutine, Dict, Optional, Any, Union, Literal, List
 from urllib.parse import urljoin
 
@@ -164,6 +165,19 @@ class Wialon:
                 raise KeyError(f"Detected AVLEventHandler duplicate {callback.__name__}")
             self.__avl_event_handlers[callback.__name__] = handler
             return callback
+
+        return wrapper
+
+    def avl_event_once(self, func: Optional[Callable[..., Coroutine[Any, Any, Any]]] = None
+                       ) -> Callable[..., Coroutine[Any, Any, Any]]:
+        """Be certain that handler will be removed after single execution"""
+
+        @wraps(func)
+        async def wrapper(*args, **kwargs) -> Any:
+            try:
+                return await func(*args, **kwargs)
+            finally:
+                self.remove_avl_event_handler(func)
 
         return wrapper
 
@@ -401,6 +415,16 @@ class Wialon:
                     except (aiohttp.ClientError, WialonError) as e:
                         logger.exception(e)
                         raise
+
+    async def wait(self, call: Coroutine[Any, Any, Any], timeout: Optional[float] = None) -> Any:
+        """Decorate a Call with specified request timeout"""
+        prev_timeout = self.timeout
+        if timeout:
+            self.timeout = timeout
+        try:
+            return await call
+        finally:
+            self.timeout = prev_timeout
 
     @staticmethod
     def help(service_name: str, action_name: str) -> None:
