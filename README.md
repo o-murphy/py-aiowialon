@@ -26,6 +26,8 @@
   * [Limitations](#limitations)
   * [Prevent polling auto logout](#prevent-polling-logout)
   * [Critical requests execution (Render, Reports, Messages)](#critical-requests-execution)
+    * [Async session lock](#async-session-lock)
+    * [Timeout for API call](#timeout-for-api-call)
   * [Extending AIO Wialon](#extending-aio-wialon)
   * [Debugging](#debugging)
   
@@ -37,7 +39,7 @@ pip install py-aiowialon
 ```
 
 ## Start Polling
-Open session and start poll AVL events immediately
+Open session and start poll AVL events immediately.
 [Look the Wialon Events section](#wialon-events) to see how we can handle AVL Events on polling
 ```python
 import asyncio
@@ -337,10 +339,12 @@ wialon.start_polling(token=TOKEN, logout_finally=False)
 ```
 
 ### Critical requests execution
+
+#### Async session lock
 Some requests to services like `Render`, `Reports`, `Messages` requires blocking other requests to be executed together per single session.
-* Use the `@wialon.lock_session` decorator to block async loop till your operation done
-* You can apply `@wialon.session_lock` also for handlers
-* You can use `@wialon.session_lock` inside the methods when [inheriting Wialon](#extending-aio-wialon)
+* Use the `@Wialon.lock_session` decorator to block async loop till your operation done
+* You can apply `@Wialon.session_lock` also for handlers
+* You can use `@Wialon.session_lock` inside the methods when [inheriting Wialon](#extending-aio-wialon)
 
 ```python
 import asyncio
@@ -376,6 +380,32 @@ async def unit_event(event: AvlEvent):
   for i in range(5):
     print("Waiting lock release", i)
     await asyncio.sleep(1)
+```
+
+
+#### Timeout for API call
+Some API calls requires special timeouts, cause them are processing long. 
+Default timeout for aiohttp request is 5 seconds.
+You can set custom timeout on some call executing.
+It mostly usefull with `@Wialon.session_lock`
+```python
+@wialon.avl_event_handler()
+@wialon.session_lock
+async def unit_event(event: AvlEvent):
+    try:
+        await wialon.wait(wialon.messages_load_last(
+            itemId=event.data.i,
+            lastTime=event.tm,
+            lastCount=10000,
+            flags=0x0000,
+            flagsMask=0xFF00,
+            loadCount=10000
+        ), 10)
+    except (TimeoutError, WialonError) as err:
+        print(err)
+    for i in range(5):
+        print("Waiting exclusive operation", i, "item:", event.data.i)
+        await asyncio.sleep(1)
 ```
 
 

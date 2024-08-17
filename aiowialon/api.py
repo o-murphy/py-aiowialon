@@ -171,12 +171,14 @@ class Wialon:
     def avl_event_once(self, func: Optional[Callable[..., Coroutine[Any, Any, Any]]] = None
                        ) -> Callable[..., Coroutine[Any, Any, Any]]:
         """Be certain that handler will be removed after single execution"""
+
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
             try:
                 return await func(*args, **kwargs)
             finally:
                 self.remove_avl_event_handler(func)
+
         return wrapper
 
     def remove_avl_event_handler(self, callback: Union[str, AvlEventCallback]):
@@ -414,33 +416,15 @@ class Wialon:
                         logger.exception(e)
                         raise
 
-    # async def wait(self, call: Coroutine[Any, Any, Any], timeout: Optional[float] = None) -> Any:
-    #     if not self._is_call(call) or not call.cr_frame:
-    #         raise TypeError("Coroutine is not an Wialon.call")
-    #     prev_timeout = self.timeout
-    #     if timeout:
-    #         self.timeout = timeout
-    #     # try:
-    #     return await call
-    #     # finally:
-    #     #     self.timeout = prev_timeout
-
-
-    # def response_timeout(self, timeout: float) -> Callable[[Callable[..., Coroutine[Any, Any, Any]]], Callable[..., Coroutine[Any, Any, Any]]]:
-    #     """Set a timeout before function execution and restore it after"""
-    #     def decorator(func: Callable[..., Coroutine[Any, Any, Any]]) -> Callable[..., Coroutine[Any, Any, Any]]:
-    #         @wraps(func)
-    #         async def wrapper(*args: Any, **kwargs: Any) -> Any:
-    #             prev_timeout = self.timeout
-    #             try:
-    #                 self.timeout = timeout
-    #                 print(self.timeout)
-    #                 return await func(*args, **kwargs)
-    #             finally:
-    #                 self.timeout = prev_timeout
-    #                 print(self.timeout)
-    #         return wrapper
-    #     return decorator
+    async def wait(self, call: Coroutine[Any, Any, Any], timeout: Optional[float] = None) -> Any:
+        """Decorate a Call with specified request timeout"""
+        prev_timeout = self.timeout
+        if timeout:
+            self.timeout = timeout
+        try:
+            return await call
+        finally:
+            self.timeout = prev_timeout
 
     @staticmethod
     def help(service_name: str, action_name: str) -> None:
