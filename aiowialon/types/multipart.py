@@ -1,7 +1,7 @@
 """Data types for multipart Wialon Remote API calls"""
 
 from dataclasses import dataclass, field, asdict
-from typing import Optional, Any, Dict
+from typing_extensions import Optional, Any, Dict
 
 
 @dataclass(frozen=True)

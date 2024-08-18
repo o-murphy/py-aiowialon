@@ -8,20 +8,20 @@ import json
 import warnings
 from contextlib import suppress
 from functools import wraps
-from typing import Callable, Coroutine, Dict, Optional, Any, Union, Literal, List
 from urllib.parse import urljoin
 
 import aiohttp
 from aiolimiter import AsyncLimiter
 
+from typing_extensions import Unpack, Callable, Coroutine, Dict, Optional, Any, Union, Literal, List
+
 from aiowialon.exceptions import WialonError, WialonRequestLimitExceededError, WialonWarning
 from aiowialon.logger import logger, aiohttp_trace_config
-from aiowialon.types import (AvlEventHandler, AvlEventFilter, AvlEvent,
-                             AvlEventCallback, LogoutCallback)
-from aiowialon.types import LoginParams, LoginCallback, flags, MultipartField
+from aiowialon.types import (AvlEventHandler, AvlEventFilter, AvlEvent, AvlEventCallback, ClientLogoutCallback)
+from aiowialon.types import ClientLoginParams, ClientLoginCallback, flags, MultipartField
+from aiowialon.types.api_types import core, other, token as token_params
 from aiowialon.utils.async_lock import ExclusiveAsyncLock
 from aiowialon.utils import convention
-from aiowialon.utils.compat import Unpack
 from aiowialon.validators import WialonCallRespValidator
 
 
@@ -53,8 +53,8 @@ class Wialon:
         self.__base_api_url: str = urljoin(self.__base_url, 'wialon/ajax.html')
 
         self.__avl_event_handlers: Dict[str, AvlEventHandler] = {}
-        self.__on_session_open: Optional[LoginCallback] = None
-        self.__on_session_close: Optional[LogoutCallback] = None
+        self.__on_session_open: Optional[ClientLoginCallback] = None
+        self.__on_session_close: Optional[ClientLogoutCallback] = None
 
         self.__polling_lock: asyncio.Lock = asyncio.Lock()
         self.__polling_task: Optional[asyncio.Task] = None
@@ -108,14 +108,14 @@ class Wialon:
         return self.__exclusive_session_lock.lock
 
     def on_session_open(self,
-                        callback: Optional[LoginCallback] = None) -> Optional[LoginCallback]:
+                        callback: Optional[ClientLoginCallback] = None) -> Optional[ClientLoginCallback]:
         """
         Decorator to register callback when session open
         WARNING: This decorator can set just single callback for each Wialon instance
         """
 
         if callback and not callable(callback):
-            raise TypeError(f"'on_session_open' callback must be a type of {LoginCallback}")
+            raise TypeError(f"'on_session_open' callback must be a type of {ClientLoginCallback}")
         if self.__on_session_open is not None:
             warnings.warn(
                 "'on_session_open' callback will be override with new one "
@@ -126,14 +126,14 @@ class Wialon:
         return callback
 
     def on_session_close(self,
-                         callback: Optional[LogoutCallback] = None) -> Optional[LogoutCallback]:
+                         callback: Optional[ClientLogoutCallback] = None) -> Optional[ClientLogoutCallback]:
         """
         Decorator to register callback when session close
         WARNING: This decorator can set just single callback for each Wialon instance
         """
 
         if callback and not callable(callback):
-            raise TypeError(f"'on_session_close' callback must be a type of {LogoutCallback}")
+            raise TypeError(f"'on_session_close' callback must be a type of {ClientLogoutCallback}")
         if self.__on_session_close is not None:
             warnings.warn(
                 "'on_session_close' callback will be override with new one "
@@ -210,7 +210,7 @@ class Wialon:
 
     async def start_polling(self, timeout: Union[int, float] = 2,
                             logout_finally: bool = True,
-                            **params: Unpack[LoginParams]) -> None:
+                            **params: Unpack[ClientLoginParams]) -> None:
         """Open session and start polling avl events"""
 
         if timeout < 1:
@@ -249,7 +249,7 @@ class Wialon:
         if logout:
             await self.logout()
 
-    async def login(self, **params: Unpack[LoginParams]) -> Dict[str, Any]:
+    async def login(self, **params: Unpack[ClientLoginParams]) -> token_params.TokenLoginResponse:
         """Manually login to Wialon with token or auth hash"""
 
         token = params.get("token", None)
@@ -277,7 +277,7 @@ class Wialon:
             await self.__on_session_open(session_login)
         return session_login
 
-    async def logout(self) -> Any:
+    async def logout(self) -> core.CoreErrorCode:
         """Attempt to logout"""
 
         if self._sid:
@@ -300,7 +300,7 @@ class Wialon:
                 logger.exception(err)
             await asyncio.sleep(timeout)
 
-    async def avl_evts(self) -> Any:
+    async def avl_evts(self) -> other.AvlEventResponse:
         """Call avl_event request"""
 
         if self.__polling_task:
@@ -326,12 +326,13 @@ class Wialon:
         return await self.request(action_name, self.__base_api_url, params)
 
     async def batch(self, *calls: Coroutine[Any, Any, Any],
-                    flags_: flags.BatchFlag = flags.BatchFlag.EXECUTE_ALL) -> List[Any]:
+                    flags_: flags.BatchFlag = flags.BatchFlag.EXECUTE_ALL) -> core.CoreBatchResponse:
         """Adapter method for list of 'Wialon.call()',
          coroutines to collect them to single batch API Call"""
 
         actions = []
         for coroutine in calls:
+            print(coroutine)
             if not self._is_call(coroutine) or not coroutine.cr_frame:
                 raise TypeError("Coroutine is not an 'Wialon.call' instance")
             coroutine_locals = coroutine.cr_frame.f_locals
@@ -372,7 +373,7 @@ class Wialon:
             return True
         return False
 
-    def __getattr__(self, action_name: str):
+    def __getattr__(self, action_name: str) -> Any:
         """
         Enable the calling of Wialon API methods through Python method calls
         of the same name.
