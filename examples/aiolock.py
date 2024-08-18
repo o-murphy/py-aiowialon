@@ -1,8 +1,8 @@
 import asyncio
 import logging
-from datetime import datetime
-
+from typing import List
 from aiowialon import Wialon, flags, AvlEvent, WialonError
+from aiowialon.types.api_types import core, token as token_params
 
 logging.basicConfig(level=logging.INFO)
 
@@ -25,11 +25,11 @@ wialon = WialonWithCriticalMethod(token=TEST_TOKEN)
 
 
 @wialon.on_session_open
-async def register_avl_events(session_login):
+async def register_avl_events(session_login: token_params.TokenLoginResponse):
     print("Session eid:", session_login['eid'])
-    spec = [
+    spec: List[core.CoreUpdateDataFlagsSpec] = [
         {
-            "type_": "type",
+            "type": "type",
             "data": "avl_unit",
             "flags": flags.UnitsDataFlag.BASE | flags.UnitsDataFlag.POS,
             "mode": 0

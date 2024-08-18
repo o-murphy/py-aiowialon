@@ -1,5 +1,5 @@
 """Definitions of Wialon Remote API exceptions."""
-from typing import Optional, Any, Union, List
+from typing_extensions import Optional, Any, Union, List
 
 # pylint: skip-file
 

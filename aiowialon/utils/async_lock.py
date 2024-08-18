@@ -3,7 +3,7 @@
 import asyncio
 import inspect
 from functools import wraps
-from typing import Optional, Any
+from typing_extensions import Optional, Any
 
 
 class ExclusiveAsyncLock:

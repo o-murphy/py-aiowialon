@@ -1,6 +1,6 @@
 """Shortcuts to export/import AVL Items to/from .wlp format"""
 from enum import IntEnum
-from typing import Any, Dict
+from typing_extensions import Any, Dict
 
 from aiowialon.api import Wialon
 from aiowialon.exceptions import WialonInvalidInput
@@ -111,8 +111,8 @@ class WLP:
         hw_types = await client.core_get_hw_types(
             filterType='id',
             filterValue=[item.get('hw', None)],
-            includeType="1",
-            ignoreRename="1"
+            includeType=1,
+            ignoreRename=1
         )
         if len(hw_types) <= 0:
             raise WialonInvalidInput("Hardware type not found",

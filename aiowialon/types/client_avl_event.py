@@ -3,21 +3,13 @@
 import asyncio
 from contextlib import suppress
 from dataclasses import dataclass, field
-from typing import Optional, Callable, Coroutine, Dict, Any, List, Union
+from typing_extensions import Optional, Callable, Coroutine, Dict, Any, List, Union
 
 import aiohttp
 
 from aiowialon.exceptions import WialonError
 from aiowialon.logger import logger
-from aiowialon.utils.compat import StrEnum
-
-
-class AvlEventType(StrEnum):
-    """AVL event types"""
-
-    MESSAGE = "m"
-    UPDATE = "u"
-    DELETE = "d"
+from aiowialon.types.api_types.other import AvlEventResponse, AvlEventType
 
 
 @dataclass(frozen=True)
@@ -54,12 +46,12 @@ class AvlEvent:
                 raise TypeError(f"AvlEvent.event has be a type of {AvlEventData}")
 
     @staticmethod
-    def parse_avl_events_response(avl_events: Dict[str, Any]) -> List['AvlEvent']:
+    def parse_avl_events_response(avl_events: AvlEventResponse) -> List['AvlEvent']:
         """AVL-events response parser"""
 
         tm = avl_events.get('tm', None)
         events = avl_events.get('events', [])
-        return [AvlEvent(tm, e) for e in events]
+        return [AvlEvent(tm, AvlEventData(**e)) for e in events]
 
 
 AvlEventCallback = Callable[[AvlEvent], Coroutine]
