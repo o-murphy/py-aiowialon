@@ -11,6 +11,7 @@ name: Upload Python Package To PyPi
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,6 +20,12 @@ jobs:
   deploy:
 
     runs-on: ubuntu-latest
+
+    # Specifying a GitHub environment is optional, but strongly encouraged
+    environment: release
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
 
     steps:
     - uses: actions/checkout@v4
@@ -39,5 +46,4 @@ jobs:
     - name: Publish package to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
+        skip-existing: true
