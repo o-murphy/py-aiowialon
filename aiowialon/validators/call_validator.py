@@ -1,10 +1,10 @@
 """Default validator of responses to Wialon Remote API"""
 
-from typing import Any, Dict
 import warnings
 
 import aiohttp
 
+from typing_extensions import Any, Dict
 from aiowialon.exceptions import WIALON_EXCEPTIONS, WialonError, WialonInvalidResult, WialonWarning
 
 

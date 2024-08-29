@@ -3,7 +3,7 @@ Special convention module
 to resolve Wialon Remote API specific usage cases with python
 """
 
-from typing import Any, Dict
+from typing_extensions import Any, Dict
 
 
 def prepare_action_name(action_name: str) -> str:

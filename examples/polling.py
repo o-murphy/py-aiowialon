@@ -1,8 +1,10 @@
 import asyncio
 import datetime
 import logging
+from typing import List
 
 from aiowialon import Wialon, WialonError, flags, AvlEvent
+from aiowialon.types.api_types import core, token as token_params
 
 logging.basicConfig(level=logging.INFO)
 
@@ -12,11 +14,11 @@ wialon = Wialon(token=TEST_TOKEN)
 
 
 @wialon.on_session_open
-async def register_avl_events(session_login):
+async def register_avl_events(session_login: token_params.TokenLoginResponse):
     print("Session eid:", session_login['eid'])
-    spec = [
+    spec: List[core.CoreUpdateDataFlagsSpec] = [
         {
-            "type_": "type",
+            "type": "type",
             "data": "avl_unit",
             "flags": flags.UnitsDataFlag.BASE | flags.UnitsDataFlag.POS,
             "mode": 0
@@ -26,7 +28,7 @@ async def register_avl_events(session_login):
 
 
 @wialon.on_session_close
-async def on_session_close(session_logout):
+async def on_session_close(session_logout: core.CoreErrorCode):
     print("Logout event:", session_logout)
 
 
@@ -63,6 +65,5 @@ async def batch_example_with_errors_handling():
 
 if __name__ == "__main__":
     asyncio.run(wialon.start_polling())
-
 
 asyncio.Event().clear()
