@@ -49,10 +49,11 @@ dev = ["mypy", "pylint", "pytest", "build"]
 
 [tool.setuptools]
 py-modules = ["aiowialon"]
+license-files = []
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["aiowialon*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "aiowialon.__version__"}
+version = {file = "VERSION"}

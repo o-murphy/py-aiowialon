@@ -1,10 +1,7 @@
-.idea
-
-*.pyc
-build/
-dist/
-*.egg-info
-*~
-*.geany
-*.DS_Store
-*.pypirc
+**/__pycache__
+**/.idea
+**/*.c
+**/*.pyd
+**/build
+**/dist
+**/*.egg-info
