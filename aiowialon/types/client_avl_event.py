@@ -22,7 +22,7 @@ class AvlEventData:
 
     def __post_init__(self):
         if not isinstance(self.t, AvlEventType) and isinstance(self.t, str):
-            object.__setattr__(self, 't', AvlEventType(self.t))
+            object.__setattr__(self, "t", AvlEventType(self.t))
         else:
             raise TypeError(f"AvlEventData.t has be a type of {AvlEventType}")
 
@@ -41,16 +41,16 @@ class AvlEvent:
     def __post_init__(self):
         if not isinstance(self.data, AvlEventData):
             if isinstance(self.data, dict):
-                object.__setattr__(self, 'data', AvlEventData(**self.data))
+                object.__setattr__(self, "data", AvlEventData(**self.data))
             else:
                 raise TypeError(f"AvlEvent.event has be a type of {AvlEventData}")
 
     @staticmethod
-    def parse_avl_events_response(avl_events: AvlEventResponse) -> List['AvlEvent']:
+    def parse_avl_events_response(avl_events: AvlEventResponse) -> List["AvlEvent"]:
         """AVL-events response parser"""
 
-        tm = avl_events.get('tm', None)
-        events = avl_events.get('events', [])
+        tm = avl_events.get("tm", None)
+        events = avl_events.get("events", [])
         return [AvlEvent(tm, AvlEventData(**e)) for e in events]
 
 
@@ -61,9 +61,9 @@ AvlEventFilter = Callable[[AvlEvent], bool]
 class AvlEventHandler:
     """AvlEventHandler, using for handling AVL-events through registered callbacks"""
 
-    def __init__(self,
-                 callback: AvlEventCallback,
-                 filter_: Optional[AvlEventFilter] = None) -> None:
+    def __init__(
+        self, callback: AvlEventCallback, filter_: Optional[AvlEventFilter] = None
+    ) -> None:
         self._callback: AvlEventCallback
         self._filter: Optional[AvlEventFilter]
         self._tasks: List[asyncio.Task] = []
@@ -106,7 +106,7 @@ class AvlEventHandler:
 
             callback_task = asyncio.create_task(
                 wrapped_callback(event),
-                name=f"AvlEventHandler ({len(self._tasks)}): {self._callback.__name__}"
+                name=f"AvlEventHandler ({len(self._tasks)}): {self._callback.__name__}",
             )
             self._tasks.append(callback_task)
             callback_task.add_done_callback(self.__cleanup_task)
@@ -124,8 +124,10 @@ class AvlEventHandler:
     def cleanup(self):
         """cleaning the AvlEventHandler tasks"""
 
-        logger.debug("Cleaning up AvlEventHandler: %s, cancelling all tasks",
-                     self._callback.__name__)
+        logger.debug(
+            "Cleaning up AvlEventHandler: %s, cancelling all tasks",
+            self._callback.__name__,
+        )
         for task in self._tasks:
             self.__cleanup_task(task)
         logger.debug("All handler tasks cancelled")
@@ -142,7 +144,7 @@ class AvlEventHandler:
 
         if not callable(callback):
             raise TypeError(
-                f'AvlEventHandler.callback must be a type of {AvlEventCallback}'
+                f"AvlEventHandler.callback must be a type of {AvlEventCallback}"
             )
         self._callback = callback
 
@@ -157,14 +159,16 @@ class AvlEventHandler:
         """Updates filter function with new one"""
 
         if filter_ and not callable(filter_):
-            raise TypeError(f'AvlEventHandler.filter_ must be a type of {AvlEventFilter}')
+            raise TypeError(
+                f"AvlEventHandler.filter_ must be a type of {AvlEventFilter}"
+            )
         self._filter = filter_
 
 
 __all__ = (
-    'AvlEvent',
-    'AvlEventCallback',
-    'AvlEventFilter',
-    'AvlEventData',
-    'AvlEventHandler',
+    "AvlEvent",
+    "AvlEventCallback",
+    "AvlEventFilter",
+    "AvlEventData",
+    "AvlEventHandler",
 )

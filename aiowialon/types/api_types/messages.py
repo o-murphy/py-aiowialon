@@ -18,7 +18,9 @@ class MessagesDeleteMessageResponse(TypedDict):
 
 
 class MessagesDeleteMessageErrorCodes(IntEnum):
-    NO_SUCH_MESSAGE_OR_CANNOT_DELETE_LAST = 4  # No such message or this message is the last one and cannot be deleted
+    NO_SUCH_MESSAGE_OR_CANNOT_DELETE_LAST = (
+        4  # No such message or this message is the last one and cannot be deleted
+    )
     ERROR_DELETING_MESSAGE = 6  # Error deleting message
 
 

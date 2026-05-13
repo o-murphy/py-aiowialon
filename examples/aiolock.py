@@ -8,7 +8,6 @@ logging.basicConfig(level=logging.INFO)
 
 
 class WialonWithCriticalMethod(Wialon):
-
     async def critical_method(self):
         @self.session_lock
         async def locked_task():
@@ -20,19 +19,19 @@ class WialonWithCriticalMethod(Wialon):
 
 
 # Wialon SDK playground token
-TEST_TOKEN = '5dce19710a5e26ab8b7b8986cb3c49e58C291791B7F0A7AEB8AFBFCEED7DC03BC48FF5F8'
+TEST_TOKEN = "5dce19710a5e26ab8b7b8986cb3c49e58C291791B7F0A7AEB8AFBFCEED7DC03BC48FF5F8"
 wialon = WialonWithCriticalMethod(token=TEST_TOKEN)
 
 
 @wialon.on_session_open
 async def register_avl_events(session_login: token_params.TokenLoginResponse):
-    print("Session eid:", session_login['eid'])
+    print("Session eid:", session_login["eid"])
     spec: List[core.CoreUpdateDataFlagsSpec] = [
         {
             "type": "type",
             "data": "avl_unit",
             "flags": flags.UnitsDataFlag.BASE | flags.UnitsDataFlag.POS,
-            "mode": 0
+            "mode": 0,
         }
     ]
     return await wialon.core_update_data_flags(spec=spec)
@@ -42,14 +41,17 @@ async def register_avl_events(session_login: token_params.TokenLoginResponse):
 @wialon.session_lock
 async def unit_event(event: AvlEvent):
     try:
-        await wialon.wait(wialon.messages_load_last(
-            itemId=event.data.i,
-            lastTime=event.tm,
-            lastCount=10000,
-            flags=0x0000,
-            flagsMask=0xFF00,
-            loadCount=10000
-        ), 10)
+        await wialon.wait(
+            wialon.messages_load_last(
+                itemId=event.data.i,
+                lastTime=event.tm,
+                lastCount=10000,
+                flags=0x0000,
+                flagsMask=0xFF00,
+                loadCount=10000,
+            ),
+            10,
+        )
     except (TimeoutError, WialonError) as err:
         print(err)
     for i in range(5):

@@ -1,4 +1,4 @@
-if __name__ == '__main__':
+if __name__ == "__main__":
     # EXAMPLE
     def convert_api_description_to_enums():
         import re
@@ -33,6 +33,5 @@ if __name__ == '__main__':
         for i in re.findall(pattern, api_description):
             desc, eid, decval = i
             print(f"\t{desc.upper().replace(' ', '_')} = {decval}  # {eid}, {desc}")
-
 
     convert_api_description_to_enums()

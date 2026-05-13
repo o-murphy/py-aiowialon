@@ -47,4 +47,4 @@ class ExclusiveAsyncLock:
             await self._lock_event.wait()
 
 
-__all__ = ['ExclusiveAsyncLock']
+__all__ = ["ExclusiveAsyncLock"]

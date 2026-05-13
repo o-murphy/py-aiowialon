@@ -21,4 +21,4 @@ class ClientLoginParams(TypedDict, total=False):
 ClientLoginCallback = Callable[[token_params.TokenLoginResponse], Coroutine]
 ClientLogoutCallback = Callable[[core.CoreErrorCode], Coroutine]
 
-__all__ = ('ClientLoginParams', 'ClientLoginCallback', 'ClientLogoutCallback')
+__all__ = ("ClientLoginParams", "ClientLoginCallback", "ClientLogoutCallback")

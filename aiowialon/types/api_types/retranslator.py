@@ -17,7 +17,7 @@ class RetranslatorUnitProps(TypedDict, total=False):
 class RetranslatorUpdateUnitsParams(TypedDict, total=False):
     itemId: Required[int]
     units: Required[List[RetranslatorUnitProps]]
-    callMode: Optional[Literal['add', 'remove']]
+    callMode: Optional[Literal["add", "remove"]]
 
 
 class RetranslatorUpdateUnitsResponse(TypedDict):
@@ -29,10 +29,15 @@ class RetranslatorUpdateOperatingParams(TypedDict, total=False):
     itemId: Required[int]
     operate: Required[bool]
     stopTime: Optional[int]
-    timeFrom: Optional[int]  # interval beginning of history retranslation, UNIX - time (only for history)
-    timeTo: Optional[int]  # interval end of history retranslation, UNIX - time (only for history)
+    timeFrom: Optional[
+        int
+    ]  # interval beginning of history retranslation, UNIX - time (only for history)
+    timeTo: Optional[
+        int
+    ]  # interval end of history retranslation, UNIX - time (only for history)
     callMode: Optional[
-        Literal['start', 'stop']]  # switch - start/stop retranslator, history - start/stop history retranslation
+        Literal["start", "stop"]
+    ]  # switch - start/stop retranslator, history - start/stop history retranslation
 
 
 class RetranslatorUpdateOperatingResponse(TypedDict, total=False):
@@ -57,17 +62,17 @@ class RetranslatorGetStatsResponse(TypedDict):
 
 # retranslator/update_config
 class RetranslatorProtocol(StrEnum):
-    WIALON = 'wialon'
-    WIALON_IPS = 'wialon_ips'
-    NIS = 'nis'
-    GRANIT3 = 'granit3'
-    NAVIGATOR = 'navigator'
-    SKAUT = 'skaut'
-    CYBER_GLX = 'cyber_glx'
-    GLX = 'glx'
-    VT300 = 'vt300'
-    EGTS = 'egts'
-    SOAP = 'soap'
+    WIALON = "wialon"
+    WIALON_IPS = "wialon_ips"
+    NIS = "nis"
+    GRANIT3 = "granit3"
+    NAVIGATOR = "navigator"
+    SKAUT = "skaut"
+    CYBER_GLX = "cyber_glx"
+    GLX = "glx"
+    VT300 = "vt300"
+    EGTS = "egts"
+    SOAP = "soap"
 
 
 class Check(IntEnum):
@@ -81,7 +86,9 @@ class RetranslatorConfig(TypedDict, total=False):
     port: Optional[str]  # port (for all except NIS)
     v6type: Optional[Check]  # use protocol v.6 (only for Granit Navigator)
     auth: Optional[str]  # authorization (only for NIS and Wialon IPS)
-    attach_sensors: Optional[bool]  # retranslate calculated sensor values (for для Wialon IPS & Wialon Retranslator)
+    attach_sensors: Optional[
+        bool
+    ]  # retranslate calculated sensor values (for для Wialon IPS & Wialon Retranslator)
     ssl: Optional[str]  # secure connection (for NIS)
     login: Required[str]
     password: Required[str]
