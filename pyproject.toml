@@ -61,6 +61,21 @@ testpaths = ["tests"]
 [tool.mypy]
 packages = ["aiowialon"]
 
+[tool.ruff]
+include = [
+    "pyproject.toml",
+    "aiowialon/**/*.py",
+    "aiowialon/**/*.pyi",
+]
+extend-exclude = [
+    "__init__.py",
+    "tests",
+    "examples",
+]
+
+[tool.ruff.lint]
+ignore = ["F403", "F405"]
+
 [dependency-groups]
 dev = [
     "mypy>=1.14.1",

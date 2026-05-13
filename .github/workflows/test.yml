@@ -3,9 +3,8 @@ name: Test
 on:
   pull_request:
     branches:
-      - '*'
+      - "*"
   workflow_dispatch:
-
 
 jobs:
   analyse:
@@ -14,27 +13,15 @@ jobs:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
-    - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-      with:
-        python-version: ${{ matrix.python-version }}
-        
-    - name: Install the project
-      run: uv sync --dev
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Analysing the code with ruff
-      run: |
-        uv run ruff
-      continue-on-error: true
+      - name: Install the project
+        run: uv sync --dev
 
-    - name: Analysing the code with mypy
-      run: |
-        uv run mypy ./aiowialon
-      continue-on-error: true
-
-    - name: Run tests
-      run: |
-        uv run pytest
-      continue-on-error: true
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v3.0.1
