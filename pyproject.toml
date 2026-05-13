@@ -79,6 +79,7 @@ ignore = ["F403", "F405"]
 [dependency-groups]
 dev = [
     "mypy>=1.14.1",
+    "pre-commit>=3.5.0",
     "pytest>=8.3.5",
     "ruff>=0.15.12",
 ]
