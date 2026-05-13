@@ -93,9 +93,13 @@ class UserUpdateUserNotificationParams(TypedDict, total=False):
     id: Required[int]  # notice ID, required for delete
     callMode: Required[str]  # action: 'create', 'delete'
     h: Optional[str]  # subject, required for create/update
-    d: Optional[NotificationMessage]  # message text settings, required for create/update
+    d: Optional[
+        NotificationMessage
+    ]  # message text settings, required for create/update
     s: Optional[str]  # sender, required for create/update
-    ttl: Optional[int]  # lifetime (UTC in millisecs from 1 Jan 1970), required for create/update
+    ttl: Optional[
+        int
+    ]  # lifetime (UTC in millisecs from 1 Jan 1970), required for create/update
 
 
 class UserUpdateUserNotificationResponseCreateItem(TypedDict):
@@ -106,7 +110,9 @@ class UserUpdateUserNotificationResponseCreateItem(TypedDict):
     s: str  # sender
 
 
-UserUpdateUserNotificationResponse = Tuple[int, Union[Any, UserUpdateUserNotificationResponseCreateItem]]
+UserUpdateUserNotificationResponse = Tuple[
+    int, Union[Any, UserUpdateUserNotificationResponseCreateItem]
+]
 
 
 # user/update_password
@@ -176,7 +182,9 @@ class UserGetLocaleParams(TypedDict):
     userId: Required[int]  # user ID
 
 
-UserGetLocaleResponse = Union[UserGetLocaleResponseChanged, Dict[str, Any]]  # either settings or blank object
+UserGetLocaleResponse = Union[
+    UserGetLocaleResponseChanged, Dict[str, Any]
+]  # either settings or blank object
 
 
 # user/get_dst_time
@@ -186,4 +194,6 @@ class UserGetDstTimeParams(TypedDict):
     tz: int  # time zone (optional)
 
 
-UserGetDstTimeResponse = Dict[str, int]  # keys are dynamic text, values are UNIX times (1 for DST start, 0 for DST end)
+UserGetDstTimeResponse = Dict[
+    str, int
+]  # keys are dynamic text, values are UNIX times (1 for DST start, 0 for DST end)

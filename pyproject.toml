@@ -1,20 +1,18 @@
 # Copyright 2024 Yaroshenko Dmytro (https://github.com/o-murphy)
 
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "py-aiowialon"
 
 readme = 'README.md'
-authors = [
-    { name="o-murphy", email="thehelixpg@gmail.com" },
-]
+authors = [{ name = "o-murphy", email = "thehelixpg@gmail.com" }]
 description = "Async Wialon Remote API wrapper for Python 3"
 requires-python = ">=3.8"
 keywords = ["asyncio", "wialon", "wialon remote api", "gurtam"]
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 classifiers = [
     "Intended Audience :: Developers",
     "Natural Language :: English",
@@ -32,9 +30,9 @@ classifiers = [
 ]
 
 dependencies = [
-    "aiohttp",
-    'aiolimiter',
-    "strenum; python_version < '3.11'"
+    "aiohttp>=3.10.11",
+    "aiolimiter>=1.2.1",
+    "strenum>=0.4.15; python_version < '3.11'",
 ]
 
 dynamic = ["version"]
@@ -44,9 +42,6 @@ dynamic = ["version"]
 "Bug Reports" = "https://github.com/o-murphy/py-aiowialon/issues"
 "Source" = "https://github.com/o-murphy/py-aiowialon"
 
-[project.optional-dependencies]
-dev = ["mypy", "pylint", "pytest", "build"]
-
 [tool.setuptools]
 py-modules = ["aiowialon"]
 license-files = []
@@ -55,5 +50,15 @@ license-files = []
 where = ["."]
 include = ["aiowialon*"]
 
-[tool.setuptools.dynamic]
-version = {file = "VERSION"}
+[tool.setuptools_scm]
+fallback_version = "0.0.0.dev0"
+
+[tool.pytest]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.14.1",
+    "pytest>=8.3.5",
+    "ruff>=0.15.12",
+]

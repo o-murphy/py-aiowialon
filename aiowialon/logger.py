@@ -4,10 +4,10 @@ import logging
 
 import aiohttp
 
-logger = logging.getLogger('aiowialon')
+logger = logging.getLogger("aiowialon")
 logger.setLevel(logging.INFO)
 
-aiohttp_client_logger = logging.getLogger('aiohttp.client')
+aiohttp_client_logger = logging.getLogger("aiohttp.client")
 
 
 # pylint: disable=unused-argument
@@ -34,6 +34,6 @@ aiohttp_trace_config.on_request_end.append(on_request_end)
 aiohttp_trace_config.on_request_exception.append(on_request_exception)
 
 __all__ = (
-    'logger',
-    'aiohttp_trace_config',
+    "logger",
+    "aiohttp_trace_config",
 )

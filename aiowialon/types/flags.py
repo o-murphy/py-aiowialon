@@ -7,13 +7,13 @@ from aiowialon.utils.compat import StrEnum
 
 
 class ItemType(StrEnum):
-    AVL_HW = 'avl_hw'
-    AVL_RESOURCE = 'avl_resource'
-    AVL_RETRANSLATOR = 'avl_retranslator'
-    AVL_UNIT = 'avl_unit'
-    AVL_UNIT_GROUP = 'avl_unit_group'
-    USER = 'user'
-    AVL_ROUTE = 'avl_route'
+    AVL_HW = "avl_hw"
+    AVL_RESOURCE = "avl_resource"
+    AVL_RETRANSLATOR = "avl_retranslator"
+    AVL_UNIT = "avl_unit"
+    AVL_UNIT_GROUP = "avl_unit_group"
+    USER = "user"
+    AVL_ROUTE = "avl_route"
 
 
 class ItemProp(StrEnum):
@@ -26,20 +26,32 @@ class ItemProp(StrEnum):
     REL_USER_CREATOR_NAME = "rel_user_creator_name"  # creator name;
     SYS_BILLING_ACCOUNT_GUID = "sys_billing_account_guid"  # account ID;
     REL_BILLING_ACCOUNT_NAME = "rel_billing_account_name"  # account name;
-    REL_BILLING_PARENT_ACCOUNT_NAME = "rel_billing_parent_account_name"  # parent account name;
+    REL_BILLING_PARENT_ACCOUNT_NAME = (
+        "rel_billing_parent_account_name"  # parent account name;
+    )
     REL_BILLING_PLAN_NAME = "rel_billing_plan_name"  # billing plan name;
-    SYS_COMM_STATE = "sys_comm_state"  # hardware state (1 = "1" #  enabled, 0 = "0" #  disabled);
+    SYS_COMM_STATE = (
+        "sys_comm_state"  # hardware state (1 = "1" #  enabled, 0 = "0" #  disabled);
+    )
     REL_HW_TYPE_NAME = "rel_hw_type_name"  # hardware name;
     REL_HW_TYPE_ID = "rel_hw_type_id"  # hardware ID;
     SYS_ACCOUNT_BALANCE = "sys_account_balance"  # account balance;
     SYS_ACCOUNT_DAYS = "sys_account_days"  # account days;
-    SYS_ACCOUNT_ENABLE_PARENT = "sys_account_enable_parent"  # dealer rights (1 = "1" #  on, 0 = "0" #  off);
-    SYS_ACCOUNT_DISABLED = "sys_account_disabled"  # account blocked (1 = "1" #  blocked);
+    SYS_ACCOUNT_ENABLE_PARENT = (
+        "sys_account_enable_parent"  # dealer rights (1 = "1" #  on, 0 = "0" #  off);
+    )
+    SYS_ACCOUNT_DISABLED = (
+        "sys_account_disabled"  # account blocked (1 = "1" #  blocked);
+    )
     # last modification time for sys_account_disabled, UNIX-time;
     REL_ACCOUNT_DISABLED_MOD_TIME = "rel_account_disabled_mod_time"
-    REL_ACCOUNT_UNITS_USAGE = "rel_account_units_usage"  # number of units used in account;
+    REL_ACCOUNT_UNITS_USAGE = (
+        "rel_account_units_usage"  # number of units used in account;
+    )
     REL_LAST_MSG_DATE = "rel_last_msg_date"  # last message time, UNIX-time;
-    REL_IS_ACCOUNT = "rel_is_account"  # whether resource is account (1 = "1" #  yes, 0 = "0" #  no);
+    REL_IS_ACCOUNT = (
+        "rel_is_account"  # whether resource is account (1 = "1" #  yes, 0 = "0" #  no);
+    )
     LOGIN_DATE = "login_date"  # last login time, UNIX-time;
     RETRANSLATOR_ENABLED = "retranslator_enabled"  # whether retranslator enabled ( 1 = "1" #  yes, 0 = "0" #  no);
     REL_CREATION_TIME = "rel_creation_time"  # creation time;
@@ -61,13 +73,13 @@ class ItemProp(StrEnum):
 
 class ItemPropType(StrEnum):
     PROPERTY = "property"
-    LIST = 'list'
-    PROP_ITEM_NAME = 'propitemname'
-    CREATOR_TREE = 'creatortree'
-    ACCOUNT_TREE = 'accounttree'
-    CUSTOM_FIELD = 'customfield'
-    PROFILE_FIELD = 'profilefield'
-    ADMIN_FIELD = 'adminfield'
+    LIST = "list"
+    PROP_ITEM_NAME = "propitemname"
+    CREATOR_TREE = "creatortree"
+    ACCOUNT_TREE = "accounttree"
+    CUSTOM_FIELD = "customfield"
+    PROFILE_FIELD = "profilefield"
+    ADMIN_FIELD = "adminfield"
     _REL_PROFILE_FIELD_NAME_VALUE = "rel_profilefield_name_value"
 
 
@@ -205,15 +217,21 @@ class ResourceDataFlag(IntFlag):
     POIS = 0x00000800  # 2048, POIs
     GEOFENCES = 0x00001000  # 4096, geofences
     REPORT_TEMPLATES = 0x00002000  # 8192, report templates
-    AUTO_ATTACHABLE_UNITS_FOR_DRIVERS = 0x00004000  # 16384, list of auto attachable units for drivers
+    AUTO_ATTACHABLE_UNITS_FOR_DRIVERS = (
+        0x00004000  # 16384, list of auto attachable units for drivers
+    )
     DRIVER_GROUPS = 0x00008000  # 32768, driver groups
     TRAILERS = 0x00010000  # 65536, trailers
     TRAILER_GROUPS = 0x00020000  # 131072, trailer groups
-    AUTO_ATTACHABLE_UNITS_FOR_TRAILERS = 0x00040000  # 262144, list of auto attachable units for trailers
+    AUTO_ATTACHABLE_UNITS_FOR_TRAILERS = (
+        0x00040000  # 262144, list of auto attachable units for trailers
+    )
     ORDERS = 0x00080000  # 524288, orders
     GEOFENCES_GROUPS = 0x00100000  # 1048576, geofences groups
     TAGS = 0x00200000  # 2097152, tags (passengers)
-    AUTOMATIC_UNITS_BINDING_FOR_TAGS = 0x00400000  # 4194304, automatic binding list of units (for tags)
+    AUTOMATIC_UNITS_BINDING_FOR_TAGS = (
+        0x00400000  # 4194304, automatic binding list of units (for tags)
+    )
     TAGS_GROUPS = 0x00800000  # 8388608, tags groups(passengers)
 
 
@@ -293,7 +311,9 @@ class MessagesEventTypeFlags(IntFlag):
     VIOLATION = 0x1  # 1, violation
     MAINTENANCE = 0x2  # 2, maintenance event
     ROUTE_CTRL = 0x4  # 4, route control event
-    MAINTENANCE_IS_REGISTERED = 0x10  # 16, is set in addition to flag 0x2: maintenance is registered
+    MAINTENANCE_IS_REGISTERED = (
+        0x10  # 16, is set in addition to flag 0x2: maintenance is registered
+    )
     REGISTERED_FILLING = 0x20  # 32, is set in addition to flag 0x2: registered filling
 
 
@@ -333,7 +353,9 @@ class AccessControlFlags(IntFlag):
     EXPORT_MSGS = 0x0080000000  # Export messages
     VIEW_CMDS = 0x0400000000  # View commands
     CRUD_CMDS = 0x0800000000  # Create, edit, and delete commands
-    EDIT_TRIP_DETECTOR_N_FUEL_CONSUMPTION = 0x4000000000  # Edit trip detector and fuel consumption
+    EDIT_TRIP_DETECTOR_N_FUEL_CONSUMPTION = (
+        0x4000000000  # Edit trip detector and fuel consumption
+    )
     # # Use unit in jobs, notifications, routes, retranslators
     USE_UNIT_IN_JOBS_NOTIFS_ROUTES_RETRANSLATORS = 0x8000000000
 
@@ -345,8 +367,12 @@ class AccessControlFlags(IntFlag):
     EDIT_PUSH_MSGS = 0x1000000  # Edit push messages
 
     # Retranslators
-    EDIT_RETRANSLATOR_PROPS_CTRL = 0x100000  # Edit retranslator properties including start/stop
-    MANAGE_UNITS_IN_RETRANSLATOR = 0x200000  # Add or remove units from retranslator, change their UIDs
+    EDIT_RETRANSLATOR_PROPS_CTRL = (
+        0x100000  # Edit retranslator properties including start/stop
+    )
+    MANAGE_UNITS_IN_RETRANSLATOR = (
+        0x200000  # Add or remove units from retranslator, change their UIDs
+    )
 
     # Resources
     VIEW_NOTIFS = 0x0000000100000  # View notifications
@@ -360,20 +386,26 @@ class AccessControlFlags(IntFlag):
     VIEW_REPORT_TEMPLATES = 0x0000010000000  # View report templates
     CRUD_REPORT_TEMPLATES = 0x0000020000000  # Create, edit, and delete report templates
     VIEW_DRIVERS_N_GROUPS = 0x0000040000000  # View drivers and driver groups
-    CRUD_DRIVERS_N_GROUPS = 0x0000080000000  # Create, edit, and delete drivers and driver groups
+    CRUD_DRIVERS_N_GROUPS = (
+        0x0000080000000  # Create, edit, and delete drivers and driver groups
+    )
     MANAGE_ACCOUNT = 0x0000100000000  # Manage account
     VIEW_ORDERS = 0x0000200000000  # View orders
     CRUD_ORDERS = 0x0000400000000  # Create, edit, and delete orders
     VIEW_PASSENGERS_N_GROUPS = 0x0000800000000  # View passengers and passengers groups
-    CRUD_PASSENGERS_N_GROUPS = 0x0001000000000  # Create, edit, and delete passengers and passengers groups
+    CRUD_PASSENGERS_N_GROUPS = (
+        0x0001000000000  # Create, edit, and delete passengers and passengers groups
+    )
     VIEW_TRAILERS_N_GROUPS = 0x0100000000000  # View trailers and trailer groups
-    CRUD_TRAILERS_N_GROUPS = 0x0200000000000  # Create, edit, and delete trailers and trailer groups
+    CRUD_TRAILERS_N_GROUPS = (
+        0x0200000000000  # Create, edit, and delete trailers and trailer groups
+    )
 
     # Routes
     EDIT_ROUTE_PROPS = 0x0000000100000  # Edit route properties
 
     # OTHER
-    ALL = 0xfffffffffffffff  # Sets all possible access flags to an item
+    ALL = 0xFFFFFFFFFFFFFFF  # Sets all possible access flags to an item
 
 
 class TokenFlag(IntFlag):
@@ -396,7 +428,9 @@ class TokenFlag(IntFlag):
     VIEW_DRIVERS_N_GROUPS = 1073741824  # 0x40000000, View drivers and driver groups
     VIEW_ORDERS = 8589934592  # 0x200000000, View orders
     VIEW_TAGS = 34359738368  # 0x800000000, View tags (passengers)
-    VIEW_TRAILERS_N_GROUPS = 17592186044416  # 0x100000000000, View trailers and trailer groups
+    VIEW_TRAILERS_N_GROUPS = (
+        17592186044416  # 0x100000000000, View trailers and trailer groups
+    )
 
     # View access to most data
 
@@ -405,7 +439,9 @@ class TokenFlag(IntFlag):
     VIEW_CONNECTIVITY_SETTINGS = 67108864  # 0x0004000000, View connectivity settings
 
     # # Users
-    ACT_AS_GIVEN_USER = 2097152  # 0x200000, Act as given user (create items, login, etc.)
+    ACT_AS_GIVEN_USER = (
+        2097152  # 0x200000, Act as given user (create items, login, etc.)
+    )
 
     # # Resources (Accounts)
     VIEW_NOTIFS = 1048576  # 0x100000, View notifications
@@ -425,7 +461,9 @@ class TokenFlag(IntFlag):
     CRUD_CMDS = 34359738368  # 0x800000000, Create, edit, and delete commands
 
     # # Retranslators
-    MANAGE_UNITS_IN_RETRANSLATOR = 2097152  # 0x200000, Add or remove units from retranslator, change their UIDs
+    MANAGE_UNITS_IN_RETRANSLATOR = (
+        2097152  # 0x200000, Add or remove units from retranslator, change their UIDs
+    )
 
     # # Resources (Accounts)
     CRUD_POIS = 8388608  # 0x800000, Create, edit, and delete POIs
@@ -437,21 +475,31 @@ class TokenFlag(IntFlag):
     MANAGE_ACCESS_TO_THIS_ITEM = 4  # 0x4, Manage access to this item
 
     # # Units and unit groups
-    CRUD_SERVICE_INTERVALS = 536870912  # 0x20000000, Create, edit, and delete service intervals
-    EDIT_TRIP_DETECTOR_N_FUEL_CONSUMPTION = 274877906944  # 0x4000000000, Edit trip detector and fuel consumption
+    CRUD_SERVICE_INTERVALS = (
+        536870912  # 0x20000000, Create, edit, and delete service intervals
+    )
+    EDIT_TRIP_DETECTOR_N_FUEL_CONSUMPTION = (
+        274877906944  # 0x4000000000, Edit trip detector and fuel consumption
+    )
 
     # # Users
     MANAGE_USER_ACCESS_RIGHTS = 1048576  # 0x100000, Manage user`s access rights
     CHANGE_FLAGS_FOR_GIVEN_USER = 4194304  # 0x400000, Change flags for given user
 
     # # Retranslators
-    EDIT_RETRANSLATOR_PROPS_CTRL = 1048576  # 0x100000, Edit retranslator properties including start/stop
+    EDIT_RETRANSLATOR_PROPS_CTRL = (
+        1048576  # 0x100000, Edit retranslator properties including start/stop
+    )
 
     # # Resources (Accounts)
     CRUD_NOTIFS = 2097152  # 0x200000, Create, edit, and delete notifications
     CRUD_JOBS = 134217728  # 0x8000000, Create, edit, and delete jobs
-    CRUD_REPORT_TEMPLATES = 536870912  # 0x20000000, Create, edit, and delete report templates
-    CRUD_DRIVERS_N_GROUPS = 2147483648  # 0x80000000, Create, edit, and delete drivers and drivergroups
+    CRUD_REPORT_TEMPLATES = (
+        536870912  # 0x20000000, Create, edit, and delete report templates
+    )
+    CRUD_DRIVERS_N_GROUPS = (
+        2147483648  # 0x80000000, Create, edit, and delete drivers and drivergroups
+    )
     CRUD_ORDERS = 17179869184  # 0x400000000, Create, edit, and delete orders
     CRUD_TAGS = 68719476736  # 0x1000000000, Create, edit, and delete tags (passengers)
     CRUD_TRAILERS_N_GROUPS = 35184372088832  # 0x200000000000, Create, edit, and delete trailers and trailer groups
@@ -518,6 +566,7 @@ class ReportColumnValueType(IntEnum):
     72	Area in square meters
     80	Information measurement - bytes, kbytes, mbytes
     """
+
     UNEXPECTED_TEXT_VALUE = 0
     ADDRESS_VALUE = 1
     """Operation completed successfully."""

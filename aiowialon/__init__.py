@@ -5,10 +5,7 @@ Async Wialon Remote API wrapper for Python 3
 """
 
 __author__ = "o-murphy"
-__copyright__ = (
-    "Copyright 2013-2016, Gurtam; ",
-    "Copyright 2022 Dmytro Yaroshenko; "
-)
+__copyright__ = ("Copyright 2013-2016, Gurtam; ", "Copyright 2022 Dmytro Yaroshenko; ")
 
 __credits__ = [
     "Alex Chernetsky",

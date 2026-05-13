@@ -11,24 +11,28 @@ class TokenProps(TypedDict, total=False):
     app: Required[Optional[str]]
     at: Required[int]  # token activation time, UNIX-time: 0 - now
     dur: Required[
-        int]  # token duration after activation, seconds: max value = 8640000 (100 days) if 0 – duration is infinite
+        int
+    ]  # token duration after activation, seconds: max value = 8640000 (100 days) if 0 – duration is infinite
     fl: Required[TokenFlag]
     p: Optional[Union[Any, List[Any]]]
     items: Optional[List[int]]
 
 
 class TokenUpdateParams(TypedDict, total=False):
-    callMode: Required[Literal['creation', 'editing', 'deletion']]
+    callMode: Required[Literal["creation", "editing", "deletion"]]
     userId: Optional[str]  # subuser id (optional, for managing other user tokens)
     h: Optional[str]  # token name - 72 symbols (while update, delete)
     app: Required[Optional[str]]
     at: Required[int]  # token activation time, UNIX-time: 0 - now
     dur: Required[
-        int]  # token duration after activation, seconds: max value = 8640000 (100 days) if 0 – duration is infinite
+        int
+    ]  # token duration after activation, seconds: max value = 8640000 (100 days) if 0 – duration is infinite
     fl: Required[TokenFlag]
     p: Optional[Union[Any, List[Any]]]
     items: Optional[List[int]]
-    deleteAll: Optional[bool]  # actual for callMode:delete; values: 1 or true - delete all created tokens
+    deleteAll: Optional[
+        bool
+    ]  # actual for callMode:delete; values: 1 or true - delete all created tokens
 
 
 class TokenUpdateResponse(TypedDict):
@@ -61,6 +65,7 @@ class TokenListResponse(TypedDict):
 
 
 # token/login
+
 
 class TokenLoginParams(TypedDict, total=False):
     token: Required[str]

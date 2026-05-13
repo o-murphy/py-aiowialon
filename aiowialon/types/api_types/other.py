@@ -5,6 +5,7 @@ from aiowialon.utils.compat import StrEnum
 
 class AvlEventType(StrEnum):
     """AVL event types"""
+
     MESSAGE = "m"
     UPDATE = "u"
     DELETE = "d"

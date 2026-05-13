@@ -1,6 +1,15 @@
 # pylint: disable=missing-module-docstring,line-too-long,missing-class-docstring
 from enum import IntEnum
-from typing_extensions import TypedDict, Required, Optional, Any, Dict, List, Union, Literal
+from typing_extensions import (
+    TypedDict,
+    Required,
+    Optional,
+    Any,
+    Dict,
+    List,
+    Union,
+    Literal,
+)
 from aiowialon.types import flags
 
 Incomplete = Any
@@ -249,10 +258,10 @@ class CoreUpdateDataFlagsResponse(TypedDict):
 
 # core/get_hw_types
 
-HwCategory = Literal['auto', 'tracker', 'mobile', 'soft']
-HwFeature = Literal['wifi_pos']
+HwCategory = Literal["auto", "tracker", "mobile", "soft"]
+HwFeature = Literal["wifi_pos"]
 
-CoreGetHwTypesFilterType = Literal['name', 'id', 'type', 'feature']
+CoreGetHwTypesFilterType = Literal["name", "id", "type", "feature"]
 CoreGetHwTypesFilter = Union[str, int, List[int], HwCategory, HwFeature]
 
 
@@ -277,6 +286,7 @@ CoreGetHwTypesResponse = List[CoreHwType]
 
 # core/get_hw_cmds
 
+
 class CoreGetHwCommandsParams(TypedDict, total=False):
     deviceTypeId: Required[int]
     unitId: Optional[int]
@@ -297,6 +307,7 @@ CoreGetHwCommandsTemplates = Dict[str, HwCommandsTemplate]
 
 # core/reset_password_request
 
+
 class CoreResetPasswordRequestParams(TypedDict):
     user: Required[str]
     url: Required[str]
@@ -304,6 +315,7 @@ class CoreResetPasswordRequestParams(TypedDict):
 
 
 # core/reset_password_perform
+
 
 class CoreResetPasswordPerformParams(TypedDict):
     user: Required[str]
@@ -315,6 +327,7 @@ class CoreResetPasswordPerformResponse(TypedDict):
 
 
 # core/batch
+
 
 class CoreBatchParamsInstance(TypedDict):
     svc: Required[str]
@@ -331,6 +344,7 @@ CoreBatchResponse = List[CoreErrorCode]
 
 # core/duplicate
 
+
 class CoreDuplicateParams(TypedDict):
     operateAs: Required[str]
     continueCurrentSession: Required[bool]
@@ -341,11 +355,13 @@ CoreDuplicateResponse: Incomplete = Incomplete
 
 # core/create_auth_hash
 
+
 class CoreCreateAuthHashResponse(TypedDict):
     authHash: str
 
 
 # core/use_auth_hash
+
 
 class CoreUseAuthHashParams(TypedDict):
     authHash: Required[str]
@@ -357,6 +373,7 @@ CoreUseAuthHashResponse: Incomplete = Incomplete
 
 
 # core/check_unique
+
 
 class CoreCheckUniqueParams(TypedDict):
     type: Required[str]
