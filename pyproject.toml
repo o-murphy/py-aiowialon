@@ -10,7 +10,7 @@ name = "py-aiowialon"
 readme = 'README.md'
 authors = [{ name = "o-murphy", email = "thehelixpg@gmail.com" }]
 description = "Async Wialon Remote API wrapper for Python 3"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 keywords = ["asyncio", "wialon", "wialon remote api", "gurtam"]
 license = { file = "LICENSE" }
 classifiers = [
@@ -20,8 +20,6 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
