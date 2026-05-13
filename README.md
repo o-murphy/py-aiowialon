@@ -6,7 +6,6 @@ https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner-direc
 https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md
 
 
-
 # AIO Wialon
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://opensource.org/licenses/MIT)
 [![pypi version](https://img.shields.io/pypi/v/py-aiowialon)](https://pypi.org/project/py-aiowialon/)
@@ -14,35 +13,44 @@ https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md
 `AIO Wialon` is an async implementation of Python wrapper for Wialon Remote API, 
 
 ### Table of 
-* [Installation](#installation)
-* [Start Polling](#start-polling)
-* [Wialon API Call](#wialon-api-call)
-  * [API Call Example](#api-call-example)
-  * [Batch requests](#batch-requests)
-  * [Multipart requests](#multipart-requests)
-  * [Shortcuts](#shortcuts)
-* [Wialon Events](#wialon-events)
-  * [Register AVL Events](#register-avl-events)
-  * [On login/logout](#on-loginlogout)
-  * [AVL Events Handling](#avl-events-handling)
-    * [Register AVL Events handler](#register-avl-events-handlers)
-    * [Remove AVL Events handler](#remove-avl-events-handlers)
-    * [Disposable handlers](#disposable-handlers)
-* [Exceptions Handling](#exceptions-handling)
-  * [Get exception results, batch exceptions](#exceptions-handling-batch)
-* [Quick API Help](#quick-api-help)
-* [Advanced](#advanced-usage)
-  * [Limitations](#limitations)
-  * [Prevent polling auto logout](#prevent-polling-logout)
-  * [Critical requests execution (Render, Reports, Messages)](#critical-requests-execution)
-    * [Async session lock](#async-session-lock)
-    * [Timeout for API call](#timeout-for-api-call)
-  * [Extending AIO Wialon](#extending-aio-wialon)
-  * [Debugging](#debugging)
-  
-* [Wialon Remote Api documentation](http://sdk.wialon.com/wiki/en/sidebar/remoteapi/apiref/apiref)
+- [AIO Wialon](#aio-wialon)
+    - [Table of](#table-of)
+  - [Installation](#installation)
+    - [With uv](#with-uv)
+    - [With pip](#with-pip)
+  - [Start Polling](#start-polling)
+  - [Wialon API Call](#wialon-api-call)
+      - [API Call Example](#api-call-example)
+    - [Batch requests](#batch-requests)
+    - [Multipart requests](#multipart-requests)
+    - [Shortcuts](#shortcuts)
+  - [Wialon Events](#wialon-events)
+    - [Register AVL Events](#register-avl-events)
+    - [On login/logout](#on-loginlogout)
+    - [AVL Events Handling](#avl-events-handling)
+      - [Register AVL Events handlers](#register-avl-events-handlers)
+      - [Remove AVL Events handlers](#remove-avl-events-handlers)
+      - [Disposable handlers](#disposable-handlers)
+  - [Exceptions Handling](#exceptions-handling)
+    - [Exceptions Handling (Batch)](#exceptions-handling-batch)
+  - [Quick API Help](#quick-api-help)
+  - [Advanced usage](#advanced-usage)
+    - [Limitations](#limitations)
+    - [Prevent polling logout](#prevent-polling-logout)
+    - [Critical requests execution](#critical-requests-execution)
+      - [Async session lock](#async-session-lock)
+      - [Timeout for API call](#timeout-for-api-call)
+    - [Extending AIO Wialon](#extending-aio-wialon)
+    - [Debugging](#debugging)
 
 ## Installation
+
+### With uv
+```bash
+uv add py-aiowialon
+```
+
+### With pip
 ```bash
 pip install py-aiowialon
 ```

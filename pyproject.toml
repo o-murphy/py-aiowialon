@@ -1,7 +1,7 @@
 # Copyright 2024 Yaroshenko Dmytro (https://github.com/o-murphy)
 
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = ["setuptools>=75.3.4", "setuptools-scm[toml]>=9.2.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -25,6 +25,8 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
