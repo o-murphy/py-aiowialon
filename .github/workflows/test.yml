@@ -36,5 +36,5 @@ jobs:
 
     - name: Run tests
       run: |
-        uv run pytest ./aiowialon
+        uv run pytest
       continue-on-error: true

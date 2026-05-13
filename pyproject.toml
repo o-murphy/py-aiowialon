@@ -58,6 +58,9 @@ fallback_version = "0.0.0.dev0"
 [tool.pytest]
 testpaths = ["tests"]
 
+[tool.mypy]
+packages = ["aiowialon"]
+
 [dependency-groups]
 dev = [
     "mypy>=1.14.1",
