@@ -117,7 +117,7 @@ class WLP:
         unit_id = item["id"]
         hw_types = await client.core_get_hw_types(
             filterType="id",
-            filterValue=[item.get("hw", None)],
+            filterValue=[item["hw"]],
             includeType=1,
             ignoreRename=1,
         )
