@@ -1,0 +1,139 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      testpypi:
+        description: "Publish to TestPyPI"
+        required: false
+        type: boolean
+        default: false
+      version:
+        description: "Override version (e.g. 2.0.0b1) — needed for TestPyPI to avoid dev suffix"
+        required: false
+        type: string
+        default: ""
+
+run-name: >
+  Release →
+  ${{ github.event_name == 'push' && 'PyPI' ||
+      github.event_name == 'workflow_dispatch' && inputs.testpypi && 'TestPyPI' ||
+      'Build only' }}
+
+permissions:
+  contents: write
+
+jobs:
+  # ── 1. Run the full test suite ────────────────────────────────────────────
+  test:
+    uses: ./.github/workflows/test.yml
+
+  # ── 2. Create a draft GitHub Release (tag pushes only) ───────────────────
+  create-release:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Generate release notes
+        id: notes
+        uses: ./.github/actions/gen_release_notes
+        with:
+          version: ${{ github.ref_name }}
+
+      - name: Create draft GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "py-aiowialon ${{ github.ref_name }}" \
+            --notes-file "${{ steps.notes.outputs.notes_file }}" \
+            --draft \
+            --prerelease=${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') }}
+
+  # ── 3. Build wheel + sdist ────────────────────────────────────────────────
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          github-token: ${{ github.token }}
+
+      - name: Build
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ inputs.version }}
+        run: uv build --out-dir dist
+
+      - name: List dist/
+        run: ls -lh dist/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 14
+
+  # ── 4. Publish + undraft release ─────────────────────────────────────────
+  publish:
+    needs: [build, create-release]
+    # run when build succeeded AND create-release either succeeded or was skipped
+    if: |
+      always() &&
+      needs.build.result == 'success' &&
+      (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment: >-
+      ${{ github.event_name == 'push' && 'pypi' ||
+          inputs.testpypi && 'testpypi' ||
+          'build' }}
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: List dist/
+        run: ls -lh dist/
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          github-token: ${{ github.token }}
+
+      - name: Publish to PyPI
+        if: github.event_name == 'push'
+        run: uv publish --trusted-publishing always dist/
+
+      - name: Publish to TestPyPI
+        if: github.event_name == 'workflow_dispatch' && inputs.testpypi
+        run: |
+          uv publish \
+            --trusted-publishing always \
+            --publish-url https://test.pypi.org/legacy/ \
+            dist/
+
+      - name: Publish GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "${{ github.ref_name }}" --draft=false
