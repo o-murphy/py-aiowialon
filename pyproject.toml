@@ -48,6 +48,9 @@ dynamic = ["version"]
 py-modules = ["aiowialon"]
 license-files = []
 
+[tool.setuptools.package-data]
+aiowialon = ["py.typed"]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["aiowialon*"]

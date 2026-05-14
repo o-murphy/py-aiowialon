@@ -4,10 +4,14 @@ on:
   pull_request:
     branches:
       - "*"
+  push:
+    branches:
+      - master
+  workflow_call:
   workflow_dispatch:
 
 jobs:
-  analyse:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -28,4 +32,8 @@ jobs:
         run: uv run pre-commit run --all-files
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run pytest tests/unit/
+
+      - name: Dependency audit
+        run: uv pip audit
+        continue-on-error: true

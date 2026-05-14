@@ -94,6 +94,27 @@ class Wialon:
         self.__limiter: AsyncLimiter = AsyncLimiter(rps, 1)
 
         self.__exclusive_session_lock: ExclusiveAsyncLock = ExclusiveAsyncLock()
+        self.__http_session: Optional[aiohttp.ClientSession] = None
+
+    @property
+    def _http_session(self) -> aiohttp.ClientSession:
+        if self.__http_session is None or self.__http_session.closed:
+            self.__http_session = aiohttp.ClientSession(
+                trust_env=True,
+                trace_configs=[aiohttp_trace_config],
+            )
+        return self.__http_session
+
+    async def __aenter__(self) -> "Wialon":
+        return self
+
+    async def __aexit__(self, *_: Any) -> None:
+        await self._close_http_session()
+
+    async def _close_http_session(self) -> None:
+        if self.__http_session and not self.__http_session.closed:
+            await self.__http_session.close()
+            self.__http_session = None
 
     @property
     def token(self) -> Optional[str]:
@@ -333,6 +354,7 @@ class Wialon:
             self._sid = None
             if self.__on_session_close:
                 await self.__on_session_close(session_logout)
+            await self._close_http_session()
             return session_logout
 
     async def _polling(self, timeout: Union[int, float] = 2) -> None:
@@ -452,28 +474,24 @@ class Wialon:
             action_name = "undefined_action"
         async with self.__limiter:
             async with self.__semaphore:
-                async with aiohttp.ClientSession(
-                    trust_env=True,
-                    trace_configs=[aiohttp_trace_config],
-                    timeout=self._timeout,
-                ) as session:
-                    try:
-                        async with session.post(url=url, data=payload) as response:
-                            # response.raise_for_status()
-                            await WialonCallRespValidator.validate_headers(response)
+                try:
+                    async with self._http_session.post(
+                        url=url, data=payload, timeout=self._timeout
+                    ) as response:
+                        await WialonCallRespValidator.validate_headers(response)
 
-                            if await WialonCallRespValidator.has_attachment(response):
-                                return await response.content.read()
+                        if await WialonCallRespValidator.has_attachment(response):
+                            return await response.content.read()
 
-                            response_data = await response.read()
-                            result = json.loads(response_data)
-                            await WialonCallRespValidator.validate_result(
-                                action_name, result
-                            )
-                            return result
-                    except (aiohttp.ClientError, WialonError) as e:
-                        logger.exception(e)
-                        raise
+                        response_data = await response.read()
+                        result = json.loads(response_data)
+                        await WialonCallRespValidator.validate_result(
+                            action_name, result
+                        )
+                        return result
+                except (aiohttp.ClientError, WialonError) as e:
+                    logger.exception(e)
+                    raise
 
     async def wait(
         self, call: Coroutine[Any, Any, Any], timeout: Optional[float] = None
