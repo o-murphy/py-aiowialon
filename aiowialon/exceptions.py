@@ -61,7 +61,7 @@ class WialonError(Exception):
             pass
 
     def __str__(self):
-        explanation = WialonError.errors.get(self.code, 6)
+        explanation = WialonError.errors.get(self.code, WialonError.errors[6])
         action_name = f'"{self.action_name}" ' if self.action_name else ""
         reason = ""
         if self.reason is not None:

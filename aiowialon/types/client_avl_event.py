@@ -1,9 +1,8 @@
 """Object-oriented model for handled AVL-events"""
 
 import asyncio
-from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 import aiohttp
 
@@ -15,8 +14,6 @@ from aiowialon.types.api_types.other import AvlEventResponse, AvlEventType
 @dataclass(frozen=True)
 class AvlEventData:
     """Keeps AVL event data, qualified by item uid"""
-
-    __slots__ = ("i", "t", "d")
 
     i: int
     t: AvlEventType

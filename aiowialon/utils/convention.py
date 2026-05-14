@@ -11,7 +11,7 @@ def prepare_action_name(action_name: str) -> str:
     Uses for replacing a call 'action_name' with Wialon Remote API 'svc' name
     Example:
     >>> 'core_search_item' -> 'core/search_item'
-    >>> 'unit_group_update_groups' -> 'unit_group/search_item'
+    >>> 'unit_group_update_groups' -> 'unit_group/update_groups'
     """
     act_name = action_name.lower()
     if act_name.startswith("unit_group"):

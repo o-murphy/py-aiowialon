@@ -55,8 +55,10 @@ include = ["aiowialon*"]
 [tool.setuptools_scm]
 fallback_version = "0.0.0.dev0"
 
-[tool.pytest]
+[tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.mypy]
 packages = ["aiowialon"]
@@ -81,5 +83,6 @@ dev = [
     "mypy>=1.14.1",
     "pre-commit>=3.5.0",
     "pytest>=8.3.5",
+    "pytest-asyncio>=0.24.0",
     "ruff>=0.15.12",
 ]

@@ -383,7 +383,6 @@ class Wialon:
 
         actions = []
         for coroutine in calls:
-            print(coroutine)
             if not self._is_call(coroutine) or not coroutine.cr_frame:
                 raise TypeError("Coroutine is not an 'Wialon.call' instance")
             coroutine_locals = coroutine.cr_frame.f_locals

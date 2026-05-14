@@ -29,8 +29,7 @@ class WialonCallRespValidator:
         reason = result.get("reason", None)
         if code in WIALON_EXCEPTIONS:
             raise WIALON_EXCEPTIONS[code](reason, action_name, result)
-        if code in WialonError.errors:
-            raise WialonError(code, reason, action_name, result)
+        raise WialonError(code, reason, action_name, result)
 
     @staticmethod
     async def validate_headers(response: aiohttp.ClientResponse) -> None:

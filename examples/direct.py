@@ -11,8 +11,7 @@ async def main():
     Example of manual using
     """
     try:
-        result = await wialon.login()
-        wialon.sid = result["eid"]
+        await wialon.login()
         await wialon.avl_evts()
         await wialon.core_logout()
     except WialonError:
