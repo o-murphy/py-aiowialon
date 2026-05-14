@@ -77,21 +77,21 @@ jobs:
 
       - name: Upload results artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ matrix.python-version }}
           path: results/
           retention-days: 1
 
   # ── Combine all matrix results into one summary table ────────────────────
-  summary:
+  report:
     needs: test
     if: always()
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
       - name: Download all results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: test-results-*
           path: results/
