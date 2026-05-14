@@ -20,10 +20,13 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           python-version: ${{ matrix.python-version }}
           activate-environment: "true"
+          enable-cache: "true"
+          cache-dependency-glob: "**/uv.lock"
+          github-token: ${{ github.token }}
 
       - name: Install the project
         run: uv sync --dev
@@ -42,7 +45,7 @@ jobs:
         if: always()
         shell: python
         run: |
-          import json, os, subprocess, xml.etree.ElementTree as ET
+          import json, os, re, subprocess, xml.etree.ElementTree as ET
 
           def parse_xml(path):
               try:
@@ -59,17 +62,23 @@ jobs:
                   return None
 
           try:
-              audit = subprocess.check_output(
-                  ["uv", "audit"], text=True, stderr=subprocess.STDOUT
-              ).strip()
+              out = subprocess.check_output(
+                  ["uv", "audit"], text=True, stderr=subprocess.DEVNULL
+              )
           except subprocess.CalledProcessError as ex:
-              audit = (ex.output or "").strip() or "audit failed"
+              out = ex.output or ""
+
+          packages, total = [], 0
+          for m in re.finditer(r"^(\S+) (\S+) has (\d+) known vulnerabilities:", out, re.MULTILINE):
+              n = int(m.group(3))
+              packages.append([m.group(1), m.group(2), n])
+              total += n
 
           data = {
               "version":     "${{ matrix.python-version }}",
               "unit":        parse_xml("test-results/unit.xml"),
               "integration": parse_xml("test-results/integration.xml"),
-              "audit":       audit,
+              "audit":       {"total": total, "packages": packages},
           }
           os.makedirs("results", exist_ok=True)
           with open("results/${{ matrix.python-version }}.json", "w") as fp:
@@ -89,6 +98,8 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     continue-on-error: true
+    permissions:
+      pull-requests: write
     steps:
       - name: Download all results
         uses: actions/download-artifact@v8
@@ -145,16 +156,58 @@ jobs:
                   "",
               ]
 
-          lines = ["## 🧪 Test Results", ""]
-          lines += make_table("Unit Tests",        "unit")
-          lines += make_table("Integration Tests", "integration")
+          def make_audit(data):
+              if not data or data["total"] == 0:
+                  return ["### 🔒 Security Audit", "", "✅ No known vulnerabilities.", ""]
+              rows = [f"| `{p}` | {v} | {n} |" for p, v, n in data["packages"]]
+              return [
+                  "### 🔒 Security Audit",
+                  "",
+                  "| Package | Version | Vulnerabilities |",
+                  "|---------|---------|----------------:|",
+                  *rows,
+                  "",
+                  f"> ⚠️ **{data['total']} total** — run `uv audit` locally for full details.",
+                  "",
+              ]
 
-          # audit — take from the highest Python version available
+          # test table → summary.md (PR comment) + GITHUB_STEP_SUMMARY
+          table_lines = ["## 🧪 Test Results", ""]
+          table_lines += make_table("Unit Tests",        "unit")
+          table_lines += make_table("Integration Tests", "integration")
+          table_body = "\n".join(table_lines) + "\n"
+
+          # audit (compact) → GITHUB_STEP_SUMMARY only
+          audit_lines = []
           for v in reversed(versions):
-              audit = results[v].get("audit", "").strip()
-              if audit:
-                  lines += ["### 🔒 Security Audit", "", "```", audit, "```", ""]
+              audit = results[v].get("audit")
+              if audit is not None:
+                  audit_lines = make_audit(audit)
                   break
 
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fp:
-              fp.write("\n".join(lines) + "\n")
+              fp.write(table_body + "\n".join(audit_lines) + "\n")
+
+          with open("summary.md", "w") as fp:
+              fp.write(table_body)
+
+      - name: Post or update PR comment
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          MARKER="<!-- aiowialon-test-summary -->"
+          BODY="${MARKER}
+          $(cat summary.md)"
+
+          COMMENT_ID=$(gh api "/repos/$REPO/issues/$PR/comments" \
+            --jq ".[] | select(.body | startswith(\"$MARKER\")) | .id" | head -1)
+
+          if [ -n "$COMMENT_ID" ]; then
+            gh api --method PATCH "/repos/$REPO/issues/comments/$COMMENT_ID" \
+              -f body="$BODY"
+          else
+            gh pr comment "$PR" --repo "$REPO" --body "$BODY"
+          fi
