@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+from typing import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -21,7 +22,7 @@ def make_raw_event(i=1, t="m", d=None):
 
 
 @pytest.fixture
-async def wialon():
+async def wialon() -> AsyncGenerator[Wialon, None]:
     w = Wialon(token="test-token")
     w._sid = "fake-sid"
     yield w

@@ -31,9 +31,103 @@ jobs:
       - name: Run pre-commit hooks
         run: uv run pre-commit run --all-files
 
-      - name: Run tests
-        run: uv run pytest tests/unit/
+      - name: Run unit tests
+        run: uv run pytest tests/unit/ --junitxml=test-results/unit.xml
 
-      - name: Dependency audit
-        run: uv pip audit
+      - name: Unit test summary
+        if: always()
+        shell: python
+        run: |
+          import xml.etree.ElementTree as ET, os
+          try:
+              root = ET.parse("test-results/unit.xml").getroot()
+          except FileNotFoundError:
+              exit(0)
+          suite = root if root.tag == "testsuite" else root.find("testsuite")
+          tests    = int(suite.get("tests",    0))
+          failures = int(suite.get("failures", 0))
+          errors   = int(suite.get("errors",   0))
+          skipped  = int(suite.get("skipped",  0))
+          passed   = tests - failures - errors - skipped
+          elapsed  = float(suite.get("time", 0))
+          icon     = "✅" if not (failures or errors) else "❌"
+          version  = "${{ matrix.python-version }}"
+          lines = [
+              f"## {icon} Unit Tests — Python {version}",
+              "",
+              "| | Count |",
+              "|---|---:|",
+              f"| ✅ Passed  | {passed} |",
+              f"| ❌ Failed  | {failures} |",
+              f"| 💥 Errors  | {errors} |",
+              f"| ⏭ Skipped | {skipped} |",
+              f"| **Total** | **{tests}** |",
+              "",
+              f"⏱ {elapsed:.1f}s",
+          ]
+          if failures or errors:
+              lines += ["", "### Failed tests", ""]
+              for tc in suite.findall("testcase"):
+                  node = tc.find("failure") or tc.find("error")
+                  if node is not None:
+                      msg = (node.get("message") or "")[:120]
+                      lines.append(f"- `{tc.get('classname')}.{tc.get('name')}`: {msg}")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fp:
+              fp.write("\n".join(lines) + "\n\n")
+
+      - name: Run integration tests
+        run: uv run pytest --integration --junitxml=test-results/integration.xml
+        continue-on-error: true
+
+      - name: Integration test summary
+        if: always()
+        shell: python
+        run: |
+          import xml.etree.ElementTree as ET, os
+          try:
+              root = ET.parse("test-results/integration.xml").getroot()
+          except FileNotFoundError:
+              exit(0)
+          suite = root if root.tag == "testsuite" else root.find("testsuite")
+          tests    = int(suite.get("tests",    0))
+          failures = int(suite.get("failures", 0))
+          errors   = int(suite.get("errors",   0))
+          skipped  = int(suite.get("skipped",  0))
+          passed   = tests - failures - errors - skipped
+          elapsed  = float(suite.get("time", 0))
+          icon     = "✅" if not (failures or errors) else "⚠️"
+          version  = "${{ matrix.python-version }}"
+          lines = [
+              f"## {icon} Integration Tests — Python {version}",
+              "",
+              "| | Count |",
+              "|---|---:|",
+              f"| ✅ Passed  | {passed} |",
+              f"| ❌ Failed  | {failures} |",
+              f"| 💥 Errors  | {errors} |",
+              f"| ⏭ Skipped | {skipped} |",
+              f"| **Total** | **{tests}** |",
+              "",
+              f"⏱ {elapsed:.1f}s",
+          ]
+          if failures or errors:
+              lines += ["", "### Failed tests", ""]
+              for tc in suite.findall("testcase"):
+                  node = tc.find("failure") or tc.find("error")
+                  if node is not None:
+                      msg = (node.get("message") or "")[:120]
+                      lines.append(f"- `{tc.get('classname')}.{tc.get('name')}`: {msg}")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fp:
+              fp.write("\n".join(lines) + "\n\n")
+
+      - name: Security audit
+        if: always()
+        run: |
+          {
+            echo "## 🔒 Security Audit — Python ${{ matrix.python-version }}"
+            echo ""
+            echo '```'
+            uv pip audit 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
         continue-on-error: true

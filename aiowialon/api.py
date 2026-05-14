@@ -89,6 +89,7 @@ class Wialon:
 
         self.__polling_lock: asyncio.Lock = asyncio.Lock()
         self.__polling_task: Optional[asyncio.Task] = None
+        self.__logout_lock: asyncio.Lock = asyncio.Lock()
 
         self.__semaphore: asyncio.Semaphore = asyncio.Semaphore(10)
         self.__limiter: AsyncLimiter = AsyncLimiter(rps, 1)
@@ -348,7 +349,11 @@ class Wialon:
     async def logout(self) -> core.CoreErrorCode:
         """Attempt to logout"""
 
-        if self._sid:
+        if not self._sid:
+            return
+        async with self.__logout_lock:
+            if not self._sid:
+                return
             logger.info("Wialon logout")
             session_logout = await self.core_logout()
             self._sid = None
