@@ -19,7 +19,7 @@ from aiowialon.types.api_types import (
 )
 from typing_extensions import Unpack, Any, Callable, Coroutine, Literal
 
-__all__ = ["Wialon"]
+__all__ = ("Wialon",)
 
 class Wialon:
     def __init__(
@@ -46,7 +46,7 @@ class Wialon:
     def on_session_close(
         self, callback: ClientLogoutCallback | None = None
     ) -> ClientLogoutCallback | None: ...
-    def avl_event_handler(self, filter_: AvlEventFilter | None = None) -> Callable: ...
+    def avl_event_handler(self, filter: AvlEventFilter | None = None) -> Callable: ...
     def avl_event_once(
         self, func: Callable[..., Coroutine[Any, Any, Any]] | None = None
     ) -> Callable[..., Coroutine[Any, Any, Any]]: ...

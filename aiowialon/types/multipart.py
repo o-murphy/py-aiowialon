@@ -23,4 +23,4 @@ class MultipartField:
         return {key: value for key, value in asdict(self).items() if value is not None}
 
 
-__all__ = ["MultipartField"]
+__all__ = ("MultipartField",)

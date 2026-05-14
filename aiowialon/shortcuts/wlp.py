@@ -250,4 +250,4 @@ class WLP:
         return wlp_data
 
 
-__all__ = ["WLP"]
+__all__ = ("WLP",)

@@ -101,4 +101,4 @@ class WialonCallRespValidator:
         return False
 
 
-__all__ = ["WialonCallRespValidator"]
+__all__ = ("WialonCallRespValidator",)

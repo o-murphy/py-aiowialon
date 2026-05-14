@@ -119,7 +119,7 @@ class Wialon:
 
         if not isinstance(timeout, (int, float)):
             raise TypeError("timeout must be an instance of (int, float")
-        self._timeout = aiohttp.ClientTimeout(timeout)
+        self._timeout = aiohttp.ClientTimeout(total=timeout)
 
     @property
     def session_lock(self) -> Callable:
@@ -180,7 +180,7 @@ class Wialon:
         self.__on_session_close = callback
         return callback
 
-    def avl_event_handler(self, filter_: Optional[AvlEventFilter] = None) -> Callable:
+    def avl_event_handler(self, filter: Optional[AvlEventFilter] = None) -> Callable:
         """
         Decorator to register multiple AVL event handlers for current Wialon instance
         Set callback and filter function to catch and process AVL events
@@ -197,7 +197,7 @@ class Wialon:
             >>>     await wialon.avl_evts(event)
             >>>     unit_event.unregister()  # to be honest that executes just once
             """
-            handler = AvlEventHandler(callback, filter_)
+            handler = AvlEventHandler(callback, filter)
             if callback.__name__ in self.__avl_event_handlers:
                 raise KeyError(
                     f"Detected AVLEventHandler duplicate {callback.__name__}"
@@ -235,14 +235,14 @@ class Wialon:
         else:
             warnings.warn(f"Can't remove AVL event handler: {callback}")
 
-    async def _process_event_handlers(self, event: AvlEvent) -> None:
+    def _process_event_handlers(self, event: AvlEvent) -> None:
         """Process event handlers for current item"""
 
         for _, handler in self.__avl_event_handlers.items():
-            if await handler(event):
+            if handler(event):
                 break
 
-    async def _cleanup_event_handlers(self) -> None:
+    def _cleanup_event_handlers(self) -> None:
         """Cleanup event handlers"""
 
         for _, handler in self.__avl_event_handlers.items():
@@ -286,7 +286,7 @@ class Wialon:
         if self.__polling_task:
             logger.info("Stopping polling task")
             self.__polling_task.cancel()
-            await self._cleanup_event_handlers()
+            self._cleanup_event_handlers()
             with suppress(asyncio.CancelledError):
                 await self.__polling_task
             self.__polling_task = None
@@ -342,9 +342,8 @@ class Wialon:
             try:
                 response = await self.avl_evts()
                 events = AvlEvent.parse_avl_events_response(response)
-                await asyncio.gather(
-                    *[self._process_event_handlers(event) for event in events]
-                )
+                for event in events:
+                    self._process_event_handlers(event)
             except WialonRequestLimitExceededError as err:
                 logger.exception(err)
             await asyncio.sleep(timeout)
@@ -509,4 +508,4 @@ class Wialon:
             logger.info("Cannot open webbrowser: %s", url)
 
 
-__all__ = ["Wialon"]
+__all__ = ("Wialon",)

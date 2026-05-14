@@ -1,9 +1,9 @@
 """Object-oriented model for handled AVL-events"""
 
 import asyncio
-from contextlib import suppress
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing_extensions import Optional, Callable, Coroutine, Dict, Any, List, Union
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 
@@ -16,15 +16,17 @@ from aiowialon.types.api_types.other import AvlEventResponse, AvlEventType
 class AvlEventData:
     """Keeps AVL event data, qualified by item uid"""
 
+    __slots__ = ("i", "t", "d")
+
     i: int
     t: AvlEventType
     d: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
-        if not isinstance(self.t, AvlEventType) and isinstance(self.t, str):
+        if isinstance(self.t, str):
             object.__setattr__(self, "t", AvlEventType(self.t))
-        else:
-            raise TypeError(f"AvlEventData.t has be a type of {AvlEventType}")
+        elif not isinstance(self.t, AvlEventType):
+            raise TypeError(f"AvlEventData.t must be an instance of {AvlEventType}")
 
 
 @dataclass(frozen=True)
@@ -34,7 +36,7 @@ class AvlEvent:
     used by AvlEventHandler
     """
 
-    tm: Union[int, None]
+    tm: Optional[int]
     data: AvlEventData
 
     # pylint: disable=not-a-mapping
@@ -54,7 +56,7 @@ class AvlEvent:
         return [AvlEvent(tm, AvlEventData(**e)) for e in events]
 
 
-AvlEventCallback = Callable[[AvlEvent], Coroutine]
+AvlEventCallback = Callable[[AvlEvent], Awaitable[None]]
 AvlEventFilter = Callable[[AvlEvent], bool]
 
 
@@ -62,75 +64,68 @@ class AvlEventHandler:
     """AvlEventHandler, using for handling AVL-events through registered callbacks"""
 
     def __init__(
-        self, callback: AvlEventCallback, filter_: Optional[AvlEventFilter] = None
+        self, callback: AvlEventCallback, filter: Optional[AvlEventFilter] = None
     ) -> None:
         self._callback: AvlEventCallback
         self._filter: Optional[AvlEventFilter]
-        self._tasks: List[asyncio.Task] = []
+        self._queue: asyncio.Queue[AvlEvent] = asyncio.Queue()
+        self._worker_task: Optional[asyncio.Task[None]] = None
 
         self.callback = callback
-        self.filter = filter_
+        self.filter = filter
 
-    async def __call__(self, event: AvlEvent) -> bool:
+    def __call__(self, event: AvlEvent) -> bool:
         """
         Makes an AvlEventHandler instance callable,
         calls the callback function with handled AvlEvent instance
-        returns True if filter was applied and callback task executed
+        returns True if filter was applied and callback enqueued
         and False otherwise
         """
 
-        if not self._filter:
-            await self.__process_event(event)
+        if self._filter is None or self._filter(event):
+            self.__enqueue(event)
             return True
-        if self._filter is not None:
-            if self._filter(event):
-                await self.__process_event(event)
-                return True
         return False
 
-    async def __process_event(self, event: AvlEvent) -> None:
-        """
-        Executes the callback function with handled AvlEvent,
-        suppressing the exceptions if callback raises it to prevent app breaking.
-        """
-
+    def __enqueue(self, event: AvlEvent) -> None:
         logger.info("Got AVL event %s", event)
-        with suppress(asyncio.CancelledError):
-            # Wrap the callback with a try-except block to handle exceptions
-            async def wrapped_callback(event: AvlEvent):
-                try:
-                    await self._callback(event)
-                except (WialonError, aiohttp.ClientError) as e:
-                    logger.error("Exception happened in %s", self._callback.__name__)
-                    logger.exception(e)
-
-            callback_task = asyncio.create_task(
-                wrapped_callback(event),
-                name=f"AvlEventHandler ({len(self._tasks)}): {self._callback.__name__}",
+        self._queue.put_nowait(event)
+        if self._worker_task is None or self._worker_task.done():
+            self._worker_task = asyncio.create_task(
+                self._run(),
+                name=f"AvlEventHandler: {self._callback.__name__}",
             )
-            self._tasks.append(callback_task)
-            callback_task.add_done_callback(self.__cleanup_task)
 
-    def __cleanup_task(self, task: asyncio.Task):
-        """Remove the task from the list once it's done"""
+    async def _run(self) -> None:
+        """Single worker that processes queued events sequentially"""
 
-        task.cancel()
-        with suppress(asyncio.CancelledError):
-            task.__await__()
-        if task in self._tasks:
-            self._tasks.remove(task)
-        logger.debug("Task completed and removed: %s", task.get_name())
+        while True:
+            event = await self._queue.get()
+            try:
+                await self._callback(event)
+            except asyncio.CancelledError:
+                raise
+            except (WialonError, aiohttp.ClientError):
+                logger.exception(
+                    "Exception happened in %s",
+                    self._callback.__name__,
+                )
+            except Exception as e:
+                logger.exception(
+                    "Unknown exception happened in %s: %s",
+                    self._callback.__name__,
+                    e,
+                )
 
-    def cleanup(self):
-        """cleaning the AvlEventHandler tasks"""
+    def cleanup(self) -> None:
+        """Cancel the worker and drain the event queue"""
 
-        logger.debug(
-            "Cleaning up AvlEventHandler: %s, cancelling all tasks",
-            self._callback.__name__,
-        )
-        for task in self._tasks:
-            self.__cleanup_task(task)
-        logger.debug("All handler tasks cancelled")
+        logger.debug("Cleaning up AvlEventHandler: %s", self._callback.__name__)
+        if self._worker_task and not self._worker_task.done():
+            self._worker_task.cancel()
+        while not self._queue.empty():
+            self._queue.get_nowait()
+        logger.debug("AvlEventHandler cleaned up")
 
     @property
     def callback(self) -> AvlEventCallback:
@@ -155,14 +150,14 @@ class AvlEventHandler:
         return self._filter
 
     @filter.setter
-    def filter(self, filter_: Optional[AvlEventFilter] = None) -> None:
+    def filter(self, filter: Optional[AvlEventFilter] = None) -> None:
         """Updates filter function with new one"""
 
-        if filter_ and not callable(filter_):
+        if filter is not None and not callable(filter):
             raise TypeError(
-                f"AvlEventHandler.filter_ must be a type of {AvlEventFilter}"
+                f"AvlEventHandler.filter must be a type of {AvlEventFilter}"
             )
-        self._filter = filter_
+        self._filter = filter
 
 
 __all__ = (
