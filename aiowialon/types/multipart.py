@@ -1,7 +1,7 @@
 """Data types for multipart Wialon Remote API calls"""
 
 from dataclasses import dataclass, field, asdict
-from typing import Optional, Any, Dict
+from typing_extensions import Optional, Any, Dict
 
 
 @dataclass(frozen=True)
@@ -23,4 +23,4 @@ class MultipartField:
         return {key: value for key, value in asdict(self).items() if value is not None}
 
 
-__all__ = ['MultipartField']
+__all__ = ("MultipartField",)

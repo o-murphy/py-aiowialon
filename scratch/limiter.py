@@ -18,12 +18,7 @@ async def unlimited_method(id):
         return await asyncio.sleep(random())
 
 
-from tqdm.asyncio import tqdm_asyncio
 
 
 ref = time.time()
-asyncio.run(
-    tqdm_asyncio.gather(
-        *[unlimited_method(i) for i in range(100)]
-    )
-)
+asyncio.run(tqdm_asyncio.gather(*[unlimited_method(i) for i in range(100)]))

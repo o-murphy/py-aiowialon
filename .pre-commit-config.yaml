@@ -1,0 +1,42 @@
+default_install_hook_types: [pre-commit]
+default_language_version:
+  python: python3
+
+repos:
+  - repo: local
+    hooks:
+      - id: uv-sync
+        name: uv sync before hooks
+        entry: uv
+        args: ["sync", "--dev"]
+        language: system
+        pass_filenames: false
+
+      - id: uv-mypy
+        name: mypy
+        entry: uv
+        args: ["run", "mypy"]
+        language: system
+        pass_filenames: false
+        files: '\.(py|pyi|pyx|pxd)$'
+
+      - id: uv-ruff-check
+        name: ruff lint & fix
+        entry: uv
+        args: ["run", "ruff", "check", "--fix"]
+        language: system
+        pass_filenames: false
+        files: '\.py$'
+
+      - id: uv-ruff-format
+        name: ruff format
+        entry: uv
+        args: ["run", "ruff", "format"]
+        language: system
+        pass_filenames: false
+        files: '\.py$'
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.11.13
+    hooks:
+      - id: uv-lock

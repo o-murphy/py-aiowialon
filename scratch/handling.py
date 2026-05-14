@@ -2,9 +2,9 @@
 #
 #
 # class EventHandler:
-#     def __init__(self, callback, filter_):
+#     def __init__(self, callback, filter):
 #         self.callback = callback
-#         self.filter = filter_
+#         self.filter = 
 #
 #     async def __call__(self, event):
 #         if self.filter(event):
@@ -19,9 +19,9 @@
 #         self.__handlers = {}
 #         self.__on_open = None
 #
-#     def event_handler(self, filter_):
+#     def event_handler(self, filter):
 #         def decorator(callback):
-#             handler = EventHandler(callback, filter_)
+#             handler = EventHandler(callback, filter)
 #             if callback.__name__ in self.__handlers:
 #                 raise KeyError(f"Detected EventHandler duplicate {callback}")
 #             self.__handlers[callback.__name__] = handler
@@ -51,12 +51,12 @@
 # c = Client()
 #
 #
-# @c.event_handler(filter_=lambda event: event.startswith('hello'))
+# @c.event_handler(filter=lambda event: event.startswith('hello'))
 # async def hello(event):
 #     print("Handled event: {}".format(event))
 #
 #
-# @c.event_handler(filter_=lambda event: event == 'helloworld')
+# @c.event_handler(filter=lambda event: event == 'helloworld')
 # async def helloworld(event):
 #     print("Handled event: {}".format(event))
 #

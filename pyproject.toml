@@ -1,20 +1,18 @@
 # Copyright 2024 Yaroshenko Dmytro (https://github.com/o-murphy)
 
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=75.3.4", "setuptools-scm[toml]>=9.2.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "py-aiowialon"
 
 readme = 'README.md'
-authors = [
-    { name="o-murphy", email="thehelixpg@gmail.com" },
-]
+authors = [{ name = "o-murphy", email = "thehelixpg@gmail.com" }]
 description = "Async Wialon Remote API wrapper for Python 3"
 requires-python = ">=3.8"
 keywords = ["asyncio", "wialon", "wialon remote api", "gurtam"]
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 classifiers = [
     "Intended Audience :: Developers",
     "Natural Language :: English",
@@ -27,14 +25,16 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 
 dependencies = [
-    "aiohttp",
-    'aiolimiter',
-    "strenum; python_version < '3.11'"
+    "aiohttp>=3.10.11",
+    "aiolimiter>=1.2.1",
+    "strenum>=0.4.15; python_version < '3.11'",
 ]
 
 dynamic = ["version"]
@@ -44,16 +44,52 @@ dynamic = ["version"]
 "Bug Reports" = "https://github.com/o-murphy/py-aiowialon/issues"
 "Source" = "https://github.com/o-murphy/py-aiowialon"
 
-[project.optional-dependencies]
-dev = ["mypy", "pylint", "pytest", "build"]
-
 [tool.setuptools]
 py-modules = ["aiowialon"]
 license-files = []
+
+[tool.setuptools.package-data]
+aiowialon = ["py.typed"]
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["aiowialon*"]
 
-[tool.setuptools.dynamic]
-version = {file = "VERSION"}
+[tool.setuptools_scm]
+fallback_version = "0.0.0.dev0"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "--strict-markers"
+markers = [
+    "integration: tests against the real Wialon API (deselected by default, run with --integration)",
+]
+
+[tool.mypy]
+packages = ["aiowialon"]
+
+[tool.ruff]
+include = [
+    "pyproject.toml",
+    "aiowialon/**/*.py",
+    "aiowialon/**/*.pyi",
+]
+extend-exclude = [
+    "__init__.py",
+    "tests",
+    "examples",
+]
+
+[tool.ruff.lint]
+ignore = ["F403", "F405"]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.14.1",
+    "pre-commit>=3.5.0",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.15.12",
+]

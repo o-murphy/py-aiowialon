@@ -1,6 +1,3 @@
-
-
-
 from pydantic import BaseModel, ConfigDict
 from dataclasses import dataclass
 from typing import TypedDict
@@ -13,6 +10,7 @@ class JsonRequestData2D(TypedDict, total=False):
     type: GetAccountResultType
     from_: int
 
+
 @dataclass(kw_only=True)
 class JsonRequestData2(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -24,6 +22,7 @@ class JsonRequestData2(BaseModel):
 
     def typed_dict(self) -> JsonRequestData2D:
         return JsonRequestData2D(**super().model_dump())
+
 
 j = JsonRequestData2(from_=1)
 print(j.model_dump())
