@@ -20,114 +20,194 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           python-version: ${{ matrix.python-version }}
           activate-environment: "true"
+          enable-cache: "true"
+          cache-dependency-glob: "**/uv.lock"
+          github-token: ${{ github.token }}
 
       - name: Install the project
         run: uv sync --dev
 
       - name: Run pre-commit hooks
-        run: uv run pre-commit run --all-files
+        run: uv tool run pre-commit run --all-files
 
       - name: Run unit tests
         run: uv run pytest tests/unit/ --junitxml=test-results/unit.xml
 
-      - name: Unit test summary
-        if: always()
-        shell: python
-        run: |
-          import xml.etree.ElementTree as ET, os
-          try:
-              root = ET.parse("test-results/unit.xml").getroot()
-          except FileNotFoundError:
-              exit(0)
-          suite = root if root.tag == "testsuite" else root.find("testsuite")
-          tests    = int(suite.get("tests",    0))
-          failures = int(suite.get("failures", 0))
-          errors   = int(suite.get("errors",   0))
-          skipped  = int(suite.get("skipped",  0))
-          passed   = tests - failures - errors - skipped
-          elapsed  = float(suite.get("time", 0))
-          icon     = "✅" if not (failures or errors) else "❌"
-          version  = "${{ matrix.python-version }}"
-          lines = [
-              f"## {icon} Unit Tests — Python {version}",
-              "",
-              "| | Count |",
-              "|---|---:|",
-              f"| ✅ Passed  | {passed} |",
-              f"| ❌ Failed  | {failures} |",
-              f"| 💥 Errors  | {errors} |",
-              f"| ⏭ Skipped | {skipped} |",
-              f"| **Total** | **{tests}** |",
-              "",
-              f"⏱ {elapsed:.1f}s",
-          ]
-          if failures or errors:
-              lines += ["", "### Failed tests", ""]
-              for tc in suite.findall("testcase"):
-                  node = tc.find("failure") or tc.find("error")
-                  if node is not None:
-                      msg = (node.get("message") or "")[:120]
-                      lines.append(f"- `{tc.get('classname')}.{tc.get('name')}`: {msg}")
-          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fp:
-              fp.write("\n".join(lines) + "\n\n")
-
       - name: Run integration tests
-        run: uv run pytest --integration --junitxml=test-results/integration.xml
+        run: uv run pytest tests/integration/ --integration --junitxml=test-results/integration.xml
         continue-on-error: true
 
-      - name: Integration test summary
+      - name: Collect results
         if: always()
         shell: python
         run: |
-          import xml.etree.ElementTree as ET, os
-          try:
-              root = ET.parse("test-results/integration.xml").getroot()
-          except FileNotFoundError:
-              exit(0)
-          suite = root if root.tag == "testsuite" else root.find("testsuite")
-          tests    = int(suite.get("tests",    0))
-          failures = int(suite.get("failures", 0))
-          errors   = int(suite.get("errors",   0))
-          skipped  = int(suite.get("skipped",  0))
-          passed   = tests - failures - errors - skipped
-          elapsed  = float(suite.get("time", 0))
-          icon     = "✅" if not (failures or errors) else "⚠️"
-          version  = "${{ matrix.python-version }}"
-          lines = [
-              f"## {icon} Integration Tests — Python {version}",
-              "",
-              "| | Count |",
-              "|---|---:|",
-              f"| ✅ Passed  | {passed} |",
-              f"| ❌ Failed  | {failures} |",
-              f"| 💥 Errors  | {errors} |",
-              f"| ⏭ Skipped | {skipped} |",
-              f"| **Total** | **{tests}** |",
-              "",
-              f"⏱ {elapsed:.1f}s",
-          ]
-          if failures or errors:
-              lines += ["", "### Failed tests", ""]
-              for tc in suite.findall("testcase"):
-                  node = tc.find("failure") or tc.find("error")
-                  if node is not None:
-                      msg = (node.get("message") or "")[:120]
-                      lines.append(f"- `{tc.get('classname')}.{tc.get('name')}`: {msg}")
-          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fp:
-              fp.write("\n".join(lines) + "\n\n")
+          import json, os, re, subprocess, xml.etree.ElementTree as ET
 
-      - name: Security audit
+          def parse_xml(path):
+              try:
+                  root = ET.parse(path).getroot()
+                  suite = root if root.tag == "testsuite" else root.find("testsuite")
+                  t = int(suite.get("tests",    0))
+                  f = int(suite.get("failures", 0))
+                  e = int(suite.get("errors",   0))
+                  s = int(suite.get("skipped",  0))
+                  return {"tests": t, "failures": f, "errors": e,
+                          "skipped": s, "passed": t - f - e - s,
+                          "time": float(suite.get("time", 0))}
+              except (FileNotFoundError, ET.ParseError):
+                  return None
+
+          try:
+              out = subprocess.check_output(
+                  ["uv", "audit"], text=True, stderr=subprocess.DEVNULL
+              )
+          except subprocess.CalledProcessError as ex:
+              out = ex.output or ""
+
+          packages, total = [], 0
+          for m in re.finditer(r"^(\S+) (\S+) has (\d+) known vulnerabilities:", out, re.MULTILINE):
+              n = int(m.group(3))
+              packages.append([m.group(1), m.group(2), n])
+              total += n
+
+          data = {
+              "version":     "${{ matrix.python-version }}",
+              "unit":        parse_xml("test-results/unit.xml"),
+              "integration": parse_xml("test-results/integration.xml"),
+              "audit":       {"total": total, "packages": packages},
+          }
+          os.makedirs("results", exist_ok=True)
+          with open("results/${{ matrix.python-version }}.json", "w") as fp:
+              json.dump(data, fp)
+
+      - name: Upload results artifact
         if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-${{ matrix.python-version }}
+          path: results/
+          retention-days: 1
+
+  # ── Combine all matrix results into one summary table ────────────────────
+  report:
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Download all results
+        uses: actions/download-artifact@v8
+        with:
+          pattern: test-results-*
+          path: results/
+          merge-multiple: true
+
+      - name: Build summary table
+        shell: python
         run: |
-          {
-            echo "## 🔒 Security Audit — Python ${{ matrix.python-version }}"
-            echo ""
-            echo '```'
-            uv pip audit 2>&1 || true
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-        continue-on-error: true
+          import glob, json, os
+
+          ORDER = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+
+          results = {}
+          for f in glob.glob("results/*.json"):
+              with open(f) as fp:
+                  d = json.load(fp)
+              results[d["version"]] = d
+
+          if not results:
+              exit(0)
+
+          versions = sorted(results, key=lambda v: ORDER.index(v) if v in ORDER else 99)
+
+          def col_icon(d):
+              if d is None:
+                  return "⚪"
+              return "✅" if not (d["failures"] or d["errors"]) else "❌"
+
+          def make_table(title, key):
+              cols = [results[v][key] for v in versions]
+              if all(d is None for d in cols):
+                  return []
+              header_vals = " | ".join(f"{col_icon(d)} **{v}**" for v, d in zip(versions, cols))
+              sep         = " | ".join(":---:" for _ in versions)
+
+              def row(label, field, fmt=str):
+                  cells = [fmt(d[field]) if d is not None else "—" for d in cols]
+                  return f"| {label} | {' | '.join(cells)} |"
+
+              return [
+                  f"### {title}",
+                  "",
+                  f"| | {header_vals} |",
+                  f"|---|{sep}|",
+                  row("✅ Passed",  "passed"),
+                  row("❌ Failed",  "failures"),
+                  row("💥 Errors",  "errors"),
+                  row("⏭ Skipped", "skipped"),
+                  row("**Total**",  "tests"),
+                  row("⏱ Time",    "time", lambda t: f"{t:.1f}s"),
+                  "",
+              ]
+
+          def make_audit(data):
+              if not data or data["total"] == 0:
+                  return ["### 🔒 Security Audit", "", "✅ No known vulnerabilities.", ""]
+              rows = [f"| `{p}` | {v} | {n} |" for p, v, n in data["packages"]]
+              return [
+                  "### 🔒 Security Audit",
+                  "",
+                  "| Package | Version | Vulnerabilities |",
+                  "|---------|---------|----------------:|",
+                  *rows,
+                  "",
+                  f"> ⚠️ **{data['total']} total** — run `uv audit` locally for full details.",
+                  "",
+              ]
+
+          # test table → summary.md (PR comment) + GITHUB_STEP_SUMMARY
+          table_lines = ["## 🧪 Test Results", ""]
+          table_lines += make_table("Unit Tests",        "unit")
+          table_lines += make_table("Integration Tests", "integration")
+          table_body = "\n".join(table_lines) + "\n"
+
+          # audit (compact) → GITHUB_STEP_SUMMARY only
+          audit_lines = []
+          for v in reversed(versions):
+              audit = results[v].get("audit")
+              if audit is not None:
+                  audit_lines = make_audit(audit)
+                  break
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fp:
+              fp.write(table_body + "\n".join(audit_lines) + "\n")
+
+          with open("summary.md", "w") as fp:
+              fp.write(table_body)
+
+      - name: Post or update PR comment
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          MARKER="<!-- aiowialon-test-summary -->"
+          BODY="${MARKER}
+          $(cat summary.md)"
+
+          COMMENT_ID=$(gh api "/repos/$REPO/issues/$PR/comments" \
+            --jq ".[] | select(.body | startswith(\"$MARKER\")) | .id" | head -1)
+
+          if [ -n "$COMMENT_ID" ]; then
+            gh api --method PATCH "/repos/$REPO/issues/comments/$COMMENT_ID" \
+              -f body="$BODY"
+          else
+            gh pr comment "$PR" --repo "$REPO" --body "$BODY"
+          fi
