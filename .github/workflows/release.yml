@@ -122,7 +122,7 @@ jobs:
 
       - name: Publish to PyPI
         if: github.event_name == 'push'
-        run: uv publish --trusted-publishing always dist/
+        run: uv publish --trusted-publishing always dist/*
 
       - name: Publish to TestPyPI
         if: github.event_name == 'workflow_dispatch' && inputs.testpypi
@@ -130,7 +130,7 @@ jobs:
           uv publish \
             --trusted-publishing always \
             --publish-url https://test.pypi.org/legacy/ \
-            dist/
+            dist/*
 
       - name: Publish GitHub Release
         if: github.event_name == 'push'
