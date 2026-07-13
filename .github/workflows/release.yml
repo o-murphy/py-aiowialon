@@ -25,6 +25,7 @@ run-name: >
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   # ── 1. Run the full test suite ────────────────────────────────────────────
