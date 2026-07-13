@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0b2] - 2026-07-13
+
 ## [2.0.0b1] - 2026-05-14
 
 > Major library overhaul: queue-based AVL event dispatch, persistent HTTP session, full test suite, and PEP 561 typing support.
@@ -166,7 +168,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Build system updated to `setuptools` + `setuptools-scm`.
 
-[Unreleased]: https://github.com/o-murphy/py-aiowialon/compare/v2.0.0b1...HEAD
+[Unreleased]: https://github.com/o-murphy/py-aiowialon/compare/v2.0.0b2...HEAD
+[2.0.0b2]: https://github.com/o-murphy/py-aiowialon/compare/v2.0.0b1...v2.0.0b2
 [2.0.0b1]: https://github.com/o-murphy/py-aiowialon/compare/v1.3.5...v2.0.0b1
 [1.3.5]: https://github.com/o-murphy/py-aiowialon/compare/v1.3.4.post1...v1.3.5
 [1.3.4.post1]: https://github.com/o-murphy/py-aiowialon/compare/v1.3.3...v1.3.4.post1
