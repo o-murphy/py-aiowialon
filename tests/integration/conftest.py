@@ -1,5 +1,5 @@
+from collections.abc import AsyncGenerator
 import os
-from typing import AsyncGenerator
 
 import pytest
 from aiowialon import Wialon

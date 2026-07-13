@@ -4,7 +4,7 @@ import warnings
 
 import aiohttp
 
-from typing_extensions import Any, Dict
+from typing import Any
 from aiowialon.exceptions import (
     WIALON_EXCEPTIONS,
     WialonError,
@@ -17,7 +17,7 @@ class WialonCallRespValidator:
     """Validator for responses from Wialon Remote API"""
 
     @staticmethod
-    async def raise_wialon_error(action_name: str, result: Dict[str, Any]) -> None:
+    async def raise_wialon_error(action_name: str, result: dict[str, Any]) -> None:
         """
         Extracts the error code and reason from error message returned from Wialon Remote API,
         Raises specific exception, depending on response result

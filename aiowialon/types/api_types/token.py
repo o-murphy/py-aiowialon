@@ -1,5 +1,5 @@
 # pylint: disable=missing-module-docstring,line-too-long,missing-class-docstring
-from typing_extensions import TypedDict, Required, Optional, Any, List, Literal, Union
+from typing_extensions import TypedDict, Required, Any, Literal
 from aiowialon.types.flags import TokenFlag
 
 Incomplete = Any
@@ -7,32 +7,32 @@ Incomplete = Any
 
 # token/update
 class TokenProps(TypedDict, total=False):
-    h: Optional[str]  # token name - 72 symbols (while update, delete)
-    app: Required[Optional[str]]
+    h: str | None  # token name - 72 symbols (while update, delete)
+    app: Required[str | None]
     at: Required[int]  # token activation time, UNIX-time: 0 - now
     dur: Required[
         int
     ]  # token duration after activation, seconds: max value = 8640000 (100 days) if 0 – duration is infinite
     fl: Required[TokenFlag]
-    p: Optional[Union[Any, List[Any]]]
-    items: Optional[List[int]]
+    p: Any | list[Any] | None
+    items: list[int] | None
 
 
 class TokenUpdateParams(TypedDict, total=False):
     callMode: Required[Literal["creation", "editing", "deletion"]]
-    userId: Optional[str]  # subuser id (optional, for managing other user tokens)
-    h: Optional[str]  # token name - 72 symbols (while update, delete)
-    app: Required[Optional[str]]
+    userId: str | None  # subuser id (optional, for managing other user tokens)
+    h: str | None  # token name - 72 symbols (while update, delete)
+    app: Required[str | None]
     at: Required[int]  # token activation time, UNIX-time: 0 - now
     dur: Required[
         int
     ]  # token duration after activation, seconds: max value = 8640000 (100 days) if 0 – duration is infinite
     fl: Required[TokenFlag]
-    p: Optional[Union[Any, List[Any]]]
-    items: Optional[List[int]]
-    deleteAll: Optional[
-        bool
-    ]  # actual for callMode:delete; values: 1 or true - delete all created tokens
+    p: Any | list[Any] | None
+    items: list[int] | None
+    deleteAll: (
+        bool | None
+    )  # actual for callMode:delete; values: 1 or true - delete all created tokens
 
 
 class TokenUpdateResponse(TypedDict):
@@ -42,8 +42,8 @@ class TokenUpdateResponse(TypedDict):
     ct: int  # token creation time, UNIX-time
     dur: int
     fl: TokenFlag
-    p: Union[Any, List[Any]]
-    items: List[int]
+    p: Any | list[Any]
+    items: list[int]
 
 
 # token/list
@@ -60,8 +60,8 @@ class TokenListResponse(TypedDict):
     fl: TokenFlag
     ll: int
     ttl: int
-    items: List[int]
-    p: Union[Any, List[Any]]
+    items: list[int]
+    p: Any | list[Any]
 
 
 # token/login
@@ -69,7 +69,7 @@ class TokenListResponse(TypedDict):
 
 class TokenLoginParams(TypedDict, total=False):
     token: Required[str]
-    operateAs: Optional[str]
+    operateAs: str | None
     fl: Required[Incomplete]
 
 

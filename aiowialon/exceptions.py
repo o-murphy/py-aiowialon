@@ -1,10 +1,10 @@
 """Definitions of Wialon Remote API exceptions."""
 
-from typing_extensions import Optional, Any, Union, List
+from typing import Any, Union
 
 # pylint: skip-file
 
-WialonErrorReason = Union[str, int, "WialonError", List["WialonError"]]
+WialonErrorReason = Union[str, int, "WialonError", list["WialonError"]]
 
 
 class WialonError(Exception):
@@ -46,15 +46,15 @@ class WialonError(Exception):
     def __init__(
         self,
         code: int,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
 
         self.code: int = code
-        self.reason: Optional[WialonErrorReason] = reason
-        self.action_name: Optional[str] = action_name
-        self.result: Optional[Any] = result
+        self.reason: WialonErrorReason | None = reason
+        self.action_name: str | None = action_name
+        self.result: Any = result
         try:
             self.code = int(code)
         except ValueError:
@@ -79,9 +79,9 @@ class WialonError(Exception):
 class WialonInvalidSession(WialonError, PermissionError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(1, reason, action_name, result)
 
@@ -89,9 +89,9 @@ class WialonInvalidSession(WialonError, PermissionError):
 class WialonInvalidService(WialonError, LookupError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(2, reason, action_name, result)
 
@@ -99,9 +99,9 @@ class WialonInvalidService(WialonError, LookupError):
 class WialonInvalidResult(WialonError, RuntimeError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(3, reason, action_name, result)
 
@@ -109,9 +109,9 @@ class WialonInvalidResult(WialonError, RuntimeError):
 class WialonInvalidInput(WialonError, ValueError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(4, reason, action_name, result)
 
@@ -119,9 +119,9 @@ class WialonInvalidInput(WialonError, ValueError):
 class WialonErrorPerformingRequest(WialonError, RuntimeError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(5, reason, action_name, result)
 
@@ -129,9 +129,9 @@ class WialonErrorPerformingRequest(WialonError, RuntimeError):
 class WialonUnknownError(WialonError, Exception):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(6, reason, action_name, result)
 
@@ -139,9 +139,9 @@ class WialonUnknownError(WialonError, Exception):
 class WialonAccessDenied(WialonError, PermissionError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(7, reason, action_name, result)
 
@@ -149,9 +149,9 @@ class WialonAccessDenied(WialonError, PermissionError):
 class WialonInvalidCredentials(WialonError, PermissionError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(8, reason, action_name, result)
 
@@ -159,9 +159,9 @@ class WialonInvalidCredentials(WialonError, PermissionError):
 class WialonAuthServerUnavailableError(WialonError, ConnectionError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(9, reason, action_name, result)
 
@@ -169,9 +169,9 @@ class WialonAuthServerUnavailableError(WialonError, ConnectionError):
 class WialonReachedConcurrentRequestLimit(WialonError, RuntimeError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(10, reason, action_name, result)
 
@@ -179,9 +179,9 @@ class WialonReachedConcurrentRequestLimit(WialonError, RuntimeError):
 class WialonPasswordResetError(WialonError, RuntimeError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(11, reason, action_name, result)
 
@@ -189,9 +189,9 @@ class WialonPasswordResetError(WialonError, RuntimeError):
 class WialonBillingError(WialonError, RuntimeError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(14, reason, action_name, result)
 
@@ -199,9 +199,9 @@ class WialonBillingError(WialonError, RuntimeError):
 class WialonMessageNotFoundError(WialonError, ValueError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(1001, reason, action_name, result)
 
@@ -209,9 +209,9 @@ class WialonMessageNotFoundError(WialonError, ValueError):
 class WialonDuplicateItemError(WialonError, LookupError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(1002, reason, action_name, result)
 
@@ -227,9 +227,9 @@ class WialonRequestLimitExceededError(WialonError, RuntimeError):
 
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         if isinstance(reason, int):
             reason = self._reasons.get(reason, reason)
@@ -239,9 +239,9 @@ class WialonRequestLimitExceededError(WialonError, RuntimeError):
 class WialonMessageLimitExceededError(WialonError, RuntimeError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(1004, reason, action_name, result)
 
@@ -249,9 +249,9 @@ class WialonMessageLimitExceededError(WialonError, RuntimeError):
 class WialonExecutionTimeExceededError(WialonError, RuntimeError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(1005, reason, action_name, result)
 
@@ -259,9 +259,9 @@ class WialonExecutionTimeExceededError(WialonError, RuntimeError):
 class WialonTwoFactorAuthAttemptsExceededError(WialonError, PermissionError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(1006, reason, action_name, result)
 
@@ -269,9 +269,9 @@ class WialonTwoFactorAuthAttemptsExceededError(WialonError, PermissionError):
 class WialonSessionExpiredOrIPChangedError(WialonError, RuntimeError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(1011, reason, action_name, result)
 
@@ -279,9 +279,9 @@ class WialonSessionExpiredOrIPChangedError(WialonError, RuntimeError):
 class WialonTransferUnitError(WialonError, RuntimeError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(2006, reason, action_name, result)
 
@@ -289,9 +289,9 @@ class WialonTransferUnitError(WialonError, RuntimeError):
 class WialonAccessDeniedDueToTransferError(WialonError, PermissionError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(2008, reason, action_name, result)
 
@@ -299,9 +299,9 @@ class WialonAccessDeniedDueToTransferError(WialonError, PermissionError):
 class WialonUserCreationError(WialonError, RuntimeError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(2014, reason, action_name, result)
 
@@ -309,9 +309,9 @@ class WialonUserCreationError(WialonError, RuntimeError):
 class WialonSensorDeleteForbiddenError(WialonError, RuntimeError):
     def __init__(
         self,
-        reason: Optional[WialonErrorReason] = None,
-        action_name: Optional[str] = None,
-        result: Optional[Any] = None,
+        reason: WialonErrorReason | None = None,
+        action_name: str | None = None,
+        result: Any = None,
     ):
         super().__init__(2015, reason, action_name, result)
 

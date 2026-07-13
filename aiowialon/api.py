@@ -4,6 +4,7 @@
 """Async Wialon Remote API client implementation"""
 
 import asyncio
+from collections.abc import Callable, Coroutine
 import json
 import warnings
 from contextlib import suppress
@@ -15,12 +16,7 @@ from aiolimiter import AsyncLimiter
 
 from typing_extensions import (
     Unpack,
-    Callable,
-    Coroutine,
-    Dict,
-    Optional,
     Any,
-    Union,
     Literal,
 )
 
@@ -61,8 +57,8 @@ class Wialon:
         self,
         scheme: Literal["https", "http"] = "https",
         host: str = "hst-api.wialon.com",
-        port: Optional[int] = None,
-        token: Optional[str] = None,
+        port: int | None = None,
+        token: str | None = None,
         rps: int = 10,
     ):
         """
@@ -74,8 +70,8 @@ class Wialon:
         :param rps: Max requests per second
         """
 
-        self._sid: Optional[str] = None
-        self._token: Optional[str] = token
+        self._sid: str | None = None
+        self._token: str | None = token
         self._timeout: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=5)
 
         self.__base_url = (
@@ -83,19 +79,19 @@ class Wialon:
         )
         self.__base_api_url: str = urljoin(self.__base_url, "wialon/ajax.html")
 
-        self.__avl_event_handlers: Dict[str, AvlEventHandler] = {}
-        self.__on_session_open: Optional[ClientLoginCallback] = None
-        self.__on_session_close: Optional[ClientLogoutCallback] = None
+        self.__avl_event_handlers: dict[str, AvlEventHandler] = {}
+        self.__on_session_open: ClientLoginCallback | None = None
+        self.__on_session_close: ClientLogoutCallback | None = None
 
         self.__polling_lock: asyncio.Lock = asyncio.Lock()
-        self.__polling_task: Optional[asyncio.Task] = None
+        self.__polling_task: asyncio.Task | None = None
         self.__logout_lock: asyncio.Lock = asyncio.Lock()
 
         self.__semaphore: asyncio.Semaphore = asyncio.Semaphore(10)
         self.__limiter: AsyncLimiter = AsyncLimiter(rps, 1)
 
         self.__exclusive_session_lock: ExclusiveAsyncLock = ExclusiveAsyncLock()
-        self.__http_session: Optional[aiohttp.ClientSession] = None
+        self.__http_session: aiohttp.ClientSession | None = None
 
     @property
     def _http_session(self) -> aiohttp.ClientSession:
@@ -118,7 +114,7 @@ class Wialon:
             self.__http_session = None
 
     @property
-    def token(self) -> Optional[str]:
+    def token(self) -> str | None:
         """Get current Wialon Remote API access token"""
 
         return self._token
@@ -161,8 +157,8 @@ class Wialon:
         return self.__exclusive_session_lock.lock
 
     def on_session_open(
-        self, callback: Optional[ClientLoginCallback] = None
-    ) -> Optional[ClientLoginCallback]:
+        self, callback: ClientLoginCallback | None = None
+    ) -> ClientLoginCallback | None:
         """
         Decorator to register callback when session open
         WARNING: This decorator can set just single callback for each Wialon instance
@@ -182,8 +178,8 @@ class Wialon:
         return callback
 
     def on_session_close(
-        self, callback: Optional[ClientLogoutCallback] = None
-    ) -> Optional[ClientLogoutCallback]:
+        self, callback: ClientLogoutCallback | None = None
+    ) -> ClientLogoutCallback | None:
         """
         Decorator to register callback when session close
         WARNING: This decorator can set just single callback for each Wialon instance
@@ -202,7 +198,7 @@ class Wialon:
         self.__on_session_close = callback
         return callback
 
-    def avl_event_handler(self, filter: Optional[AvlEventFilter] = None) -> Callable:
+    def avl_event_handler(self, filter: AvlEventFilter | None = None) -> Callable:
         """
         Decorator to register multiple AVL event handlers for current Wialon instance
         Set callback and filter function to catch and process AVL events
@@ -230,7 +226,7 @@ class Wialon:
         return wrapper
 
     def avl_event_once(
-        self, func: Optional[Callable[..., Coroutine[Any, Any, Any]]] = None
+        self, func: Callable[..., Coroutine[Any, Any, Any]] | None = None
     ) -> Callable[..., Coroutine[Any, Any, Any]]:
         """Be certain that handler will be removed after single execution"""
 
@@ -243,7 +239,7 @@ class Wialon:
 
         return wrapper
 
-    def remove_avl_event_handler(self, callback: Union[str, AvlEventCallback]):
+    def remove_avl_event_handler(self, callback: str | AvlEventCallback):
         """
         Manually remove AVL event handler
         :param callback: AvlEventCallback or its string name
@@ -272,7 +268,7 @@ class Wialon:
 
     async def start_polling(
         self,
-        timeout: Union[int, float] = 2,
+        timeout: int | float = 2,
         logout_finally: bool = True,
         **params: Unpack[ClientLoginParams],
     ) -> None:
@@ -362,7 +358,7 @@ class Wialon:
             await self._close_http_session()
             return session_logout
 
-    async def _polling(self, timeout: Union[int, float] = 2) -> None:
+    async def _polling(self, timeout: int | float = 2) -> None:
         """Internal avl event polling loop"""
 
         while self._sid:
@@ -499,7 +495,7 @@ class Wialon:
                     raise
 
     async def wait(
-        self, call: Coroutine[Any, Any, Any], timeout: Optional[float] = None
+        self, call: Coroutine[Any, Any, Any], timeout: float | None = None
     ) -> Any:
         """Decorate a Call with specified request timeout"""
         prev_timeout = self.timeout

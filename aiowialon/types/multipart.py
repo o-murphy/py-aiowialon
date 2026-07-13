@@ -1,7 +1,7 @@
 """Data types for multipart Wialon Remote API calls"""
 
 from dataclasses import dataclass, field, asdict
-from typing_extensions import Optional, Any, Dict
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -10,11 +10,11 @@ class MultipartField:
 
     name: str
     value: Any = field(repr=False)
-    content_type: Optional[str] = None
-    filename: Optional[str] = None
-    content_transfer_encoding: Optional[str] = None
+    content_type: str | None = None
+    filename: str | None = None
+    content_transfer_encoding: str | None = None
 
-    def dict(self) -> Dict[str, Any]:
+    def dict(self) -> dict[str, Any]:
         """Returns a dictionary representation of the multipart field
         prepared to be added to the request data, used internally
         in 'Wialon.multipart' method

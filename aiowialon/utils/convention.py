@@ -3,7 +3,7 @@ Special convention module
 to resolve Wialon Remote API specific usage cases with python
 """
 
-from typing_extensions import Any, Dict
+from typing import Any
 
 
 def prepare_action_name(action_name: str) -> str:
@@ -36,7 +36,7 @@ def prepare_action_params(params: dict) -> dict:
     if not isinstance(params, dict):
         return params
 
-    new_params: Dict[str, Any] = {}
+    new_params: dict[str, Any] = {}
     for k, v in params.items():
         # Remove trailing underscores
         new_key = k.strip("_")

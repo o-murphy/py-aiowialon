@@ -1,5 +1,5 @@
 # pylint: disable=missing-module-docstring,line-too-long,missing-class-docstring
-from typing_extensions import TypedDict, Any, Dict, List
+from typing import TypedDict, Any
 from aiowialon.utils.compat import StrEnum
 
 
@@ -14,9 +14,9 @@ class AvlEventType(StrEnum):
 class AvlEventInstance(TypedDict):
     i: int
     t: AvlEventType
-    d: Dict[str, Any]
+    d: dict[str, Any]
 
 
 class AvlEventResponse(TypedDict):
     tm: int
-    events: List[AvlEventInstance]
+    events: list[AvlEventInstance]

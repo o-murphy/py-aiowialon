@@ -1,11 +1,11 @@
 # pylint: disable=missing-module-docstring,line-too-long,missing-class-docstring
 from enum import IntEnum
-from typing_extensions import TypedDict, Required, Optional, Any, Dict, List, Union
+from typing_extensions import TypedDict, Required, Any
 
 Incomplete = Any
 
 # messages/unload
-MessagesUnloadResponse = Dict[str, Any]
+MessagesUnloadResponse = dict[str, Any]
 
 
 # messages/delete_message
@@ -26,19 +26,19 @@ class MessagesDeleteMessageErrorCodes(IntEnum):
 
 # messages/get_messages
 class Position(TypedDict):
-    y: Optional[float]
-    x: Optional[float]
-    z: Optional[float]
-    s: Optional[int]
-    c: Optional[int]
-    sc: Optional[int]
+    y: float | None
+    x: float | None
+    z: float | None
+    s: int | None
+    c: int | None
+    sc: int | None
 
 
 class Parameters(TypedDict):
-    adc1: Optional[int]
-    pre2: Optional[int]
-    param: Optional[int]
-    param5: Optional[int]
+    adc1: int | None
+    pre2: int | None
+    param: int | None
+    param5: int | None
 
 
 class Message(TypedDict):
@@ -56,13 +56,13 @@ class MessagesGetMessagesParams(TypedDict):
     indexTo: Required[int]  # index of the last message requested
     timeFrom: Required[int]  # interval beginning (UNIX time)
     timeTo: Required[int]  # interval end (UNIX time)
-    filter: Optional[str]  # filter for search
-    flags: Optional[int]  # flags for loading messages
-    flagsMask: Optional[int]  # mask for flags
-    loadCount: Optional[int]  # how many messages to return
+    filter: str | None  # filter for search
+    flags: int | None  # flags for loading messages
+    flagsMask: int | None  # mask for flags
+    loadCount: int | None  # how many messages to return
 
 
-MessagesGetMessagesResponse = List[Message]  # list of messages
+MessagesGetMessagesResponse = list[Message]  # list of messages
 
 
 # messages/get_message_file
@@ -73,7 +73,7 @@ class MessagesGetMessageFileParams(TypedDict):
 
 # Response is an image, so we'll use `Union[bytes, None]` to represent the image data.
 # If the request fails or there is no file, `None` can be used as the response.
-MessagesGetMessageFileResponse = Union[bytes, None]
+MessagesGetMessageFileResponse = bytes | None
 
 
 # messages/get_packed_messages
@@ -100,7 +100,7 @@ class MessagesLoadLastParams(TypedDict):
 
 class MessagesLoadLastResponse(TypedDict):
     count: int  # number of messages
-    messages: List[Dict[str, Any]]  # array of messages
+    messages: list[dict[str, Any]]  # array of messages
 
 
 # messages/load_interval
@@ -115,4 +115,4 @@ class MessagesLoadIntervalParams(TypedDict):
 
 class MessagesLoadIntervalResponse(TypedDict):
     count: int  # number of messages
-    messages: List[Dict[str, Any]]  # array of messages
+    messages: list[dict[str, Any]]  # array of messages

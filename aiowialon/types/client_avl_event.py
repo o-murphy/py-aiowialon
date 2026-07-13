@@ -1,8 +1,9 @@
 """Object-oriented model for handled AVL-events"""
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any
 
 import aiohttp
 
@@ -17,7 +18,7 @@ class AvlEventData:
 
     i: int
     t: AvlEventType
-    d: Dict[str, Any] = field(default_factory=dict)
+    d: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         if isinstance(self.t, str):
@@ -33,7 +34,7 @@ class AvlEvent:
     used by AvlEventHandler
     """
 
-    tm: Optional[int]
+    tm: int | None
     data: AvlEventData
 
     # pylint: disable=not-a-mapping
@@ -45,7 +46,7 @@ class AvlEvent:
                 raise TypeError(f"AvlEvent.event has be a type of {AvlEventData}")
 
     @staticmethod
-    def parse_avl_events_response(avl_events: AvlEventResponse) -> List["AvlEvent"]:
+    def parse_avl_events_response(avl_events: AvlEventResponse) -> list["AvlEvent"]:
         """AVL-events response parser"""
 
         tm = avl_events.get("tm", None)
@@ -61,12 +62,12 @@ class AvlEventHandler:
     """AvlEventHandler, using for handling AVL-events through registered callbacks"""
 
     def __init__(
-        self, callback: AvlEventCallback, filter: Optional[AvlEventFilter] = None
+        self, callback: AvlEventCallback, filter: AvlEventFilter | None = None
     ) -> None:
         self._callback: AvlEventCallback
-        self._filter: Optional[AvlEventFilter]
+        self._filter: AvlEventFilter | None
         self._queue: asyncio.Queue[AvlEvent] = asyncio.Queue()
-        self._worker_task: Optional[asyncio.Task[None]] = None
+        self._worker_task: asyncio.Task[None] | None = None
 
         self.callback = callback
         self.filter = filter
@@ -141,13 +142,13 @@ class AvlEventHandler:
         self._callback = callback
 
     @property
-    def filter(self) -> Optional[AvlEventFilter]:
+    def filter(self) -> AvlEventFilter | None:
         """Returns current filter function"""
 
         return self._filter
 
     @filter.setter
-    def filter(self, filter: Optional[AvlEventFilter] = None) -> None:
+    def filter(self, filter: AvlEventFilter | None = None) -> None:
         """Updates filter function with new one"""
 
         if filter is not None and not callable(filter):

@@ -1,9 +1,8 @@
 """Declaration of types annotation for the 'login/logout' methods,
 and session event callbacks handlers of aio wialon.Wialon client"""
 
-from typing import Awaitable, Callable, Optional
-
-from typing_extensions import TypedDict
+from collections.abc import Awaitable, Callable
+from typing import TypedDict
 
 from aiowialon.types.api_types import core, token as token_params
 
@@ -13,12 +12,12 @@ class ClientLoginParams(TypedDict, total=False):
     Types annotation for 'login' and 'start_polling' keyword arguments
     """
 
-    token: Optional[str]
-    auth_hash: Optional[str]
-    appName: Optional[str]
-    operateAs: Optional[str]
-    fl: Optional[str]
-    checkService: Optional[str]
+    token: str | None
+    auth_hash: str | None
+    appName: str | None
+    operateAs: str | None
+    fl: str | None
+    checkService: str | None
 
 
 ClientLoginCallback = Callable[[token_params.TokenLoginResponse], Awaitable[None]]

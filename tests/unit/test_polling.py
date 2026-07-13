@@ -1,9 +1,8 @@
 """Tests for Wialon polling loop and event dispatch"""
 
 import asyncio
-import json
-from typing import AsyncGenerator
-from unittest.mock import AsyncMock, MagicMock, patch
+from collections.abc import AsyncGenerator
+from unittest.mock import patch
 
 import pytest
 

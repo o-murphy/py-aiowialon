@@ -1,6 +1,6 @@
 import inspect
 from dataclasses import dataclass
-from typing import TypedDict, List, Optional
+from typing import TypedDict
 
 from aiowialon.types.flags import AccessControlFlags, GetAccountResultType
 from aiowialon.utils.compatibility import Unpack
@@ -37,12 +37,12 @@ class CoreGetAccountData(JsonRequestData):
 
 @dataclass(kw_only=True)
 class CoreCheckItemsBilling(JsonRequestData):
-    items: List[int]
+    items: list[int]
     accessFlags: AccessControlFlags
     serviceName: str
 
     class Params(TypedDict, total=False):
-        items: List[int]
+        items: list[int]
         accessFlags: AccessControlFlags
         serviceName: str
 
@@ -53,8 +53,8 @@ class TSearchSpec:
     propName: str
     propValueMask: str
     sortType: str
-    propType: Optional[str]
-    or_logic: Optional[bool] = False
+    propType: str | None
+    or_logic: bool | None = False
 
 
 @dataclass

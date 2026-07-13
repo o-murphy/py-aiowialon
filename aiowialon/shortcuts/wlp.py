@@ -1,7 +1,7 @@
 """Shortcuts to export/import AVL Items to/from .wlp format"""
 
 from enum import IntEnum
-from typing_extensions import Any, Dict
+from typing import Any
 
 from aiowialon.api import Wialon
 from aiowialon.exceptions import WialonInvalidInput
@@ -66,7 +66,7 @@ class WLP:
         )
 
     @staticmethod
-    async def _fetch_user_wlp(client: Wialon, item: Dict[str, Any]) -> Dict[str, Any]:
+    async def _fetch_user_wlp(client: Wialon, item: dict[str, Any]) -> dict[str, Any]:
         """Creates a batch of requests to get AVL user data and collects it to .wlp dict"""
         user_id = item["id"]
 
@@ -112,7 +112,7 @@ class WLP:
         return wlp_data
 
     @staticmethod
-    async def _fetch_unit_wlp(client: Wialon, item: Dict[str, Any]) -> Dict[str, Any]:
+    async def _fetch_unit_wlp(client: Wialon, item: dict[str, Any]) -> dict[str, Any]:
         """Creates a batch of requests to get AVL unit data and collects it to .wlp dict"""
         unit_id = item["id"]
         hw_types = await client.core_get_hw_types(
@@ -204,8 +204,8 @@ class WLP:
 
     @staticmethod
     async def _fetch_resource_wlp(
-        client: Wialon, item: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        client: Wialon, item: dict[str, Any]
+    ) -> dict[str, Any]:
         """Creates a batch of requests to get AVL resource data and collects it to .wlp dict"""
 
         resource_id = item["id"]

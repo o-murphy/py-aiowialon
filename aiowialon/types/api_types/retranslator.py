@@ -1,7 +1,7 @@
 # pylint: disable=missing-module-docstring,line-too-long,missing-class-docstring
 from enum import IntEnum
 
-from typing_extensions import TypedDict, Required, Optional, Any, List, Literal
+from typing_extensions import TypedDict, Required, Any, Literal
 from aiowialon.utils.compat import StrEnum
 
 Incomplete = Any
@@ -11,33 +11,33 @@ Incomplete = Any
 class RetranslatorUnitProps(TypedDict, total=False):
     a: Required[str]
     i: Required[int]
-    st: Optional[int]
+    st: int | None
 
 
 class RetranslatorUpdateUnitsParams(TypedDict, total=False):
     itemId: Required[int]
-    units: Required[List[RetranslatorUnitProps]]
-    callMode: Optional[Literal["add", "remove"]]
+    units: Required[list[RetranslatorUnitProps]]
+    callMode: Literal["add", "remove"] | None
 
 
 class RetranslatorUpdateUnitsResponse(TypedDict):
-    rtru: List[RetranslatorUnitProps]
+    rtru: list[RetranslatorUnitProps]
 
 
 # retranslator/update_operating
 class RetranslatorUpdateOperatingParams(TypedDict, total=False):
     itemId: Required[int]
     operate: Required[bool]
-    stopTime: Optional[int]
-    timeFrom: Optional[
-        int
-    ]  # interval beginning of history retranslation, UNIX - time (only for history)
-    timeTo: Optional[
-        int
-    ]  # interval end of history retranslation, UNIX - time (only for history)
-    callMode: Optional[
-        Literal["start", "stop"]
-    ]  # switch - start/stop retranslator, history - start/stop history retranslation
+    stopTime: int | None
+    timeFrom: (
+        int | None
+    )  # interval beginning of history retranslation, UNIX - time (only for history)
+    timeTo: (
+        int | None
+    )  # interval end of history retranslation, UNIX - time (only for history)
+    callMode: (
+        Literal["start", "stop"] | None
+    )  # switch - start/stop retranslator, history - start/stop history retranslation
 
 
 class RetranslatorUpdateOperatingResponse(TypedDict, total=False):
@@ -83,16 +83,16 @@ class Check(IntEnum):
 class RetranslatorConfig(TypedDict, total=False):
     protocol: Required[RetranslatorProtocol]
     server: Required[str]
-    port: Optional[str]  # port (for all except NIS)
-    v6type: Optional[Check]  # use protocol v.6 (only for Granit Navigator)
-    auth: Optional[str]  # authorization (only for NIS and Wialon IPS)
-    attach_sensors: Optional[
-        bool
-    ]  # retranslate calculated sensor values (for для Wialon IPS & Wialon Retranslator)
-    ssl: Optional[str]  # secure connection (for NIS)
+    port: str | None  # port (for all except NIS)
+    v6type: Check | None  # use protocol v.6 (only for Granit Navigator)
+    auth: str | None  # authorization (only for NIS and Wialon IPS)
+    attach_sensors: (
+        bool | None
+    )  # retranslate calculated sensor values (for для Wialon IPS & Wialon Retranslator)
+    ssl: str | None  # secure connection (for NIS)
     login: Required[str]
     password: Required[str]
-    notauth: Optional[Check]  # disable autorization (only for EGTS)
+    notauth: Check | None  # disable autorization (only for EGTS)
 
 
 class RetranslatorUpdateConfigParams(TypedDict):
@@ -101,4 +101,4 @@ class RetranslatorUpdateConfigParams(TypedDict):
 
 
 class RetranslatorUpdateConfigResponse(TypedDict):
-    rtrc: List[RetranslatorConfig]
+    rtrc: list[RetranslatorConfig]

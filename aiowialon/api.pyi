@@ -1,3 +1,5 @@
+from collections.abc import Callable, Coroutine
+
 from aiowialon.types import (
     AvlEventCallback,
     AvlEventFilter,
@@ -17,7 +19,7 @@ from aiowialon.types.api_types import (
     token as token_params,
     other,
 )
-from typing_extensions import Unpack, Any, Callable, Coroutine, Literal
+from typing_extensions import Unpack, Any, Literal
 
 __all__ = ("Wialon",)
 

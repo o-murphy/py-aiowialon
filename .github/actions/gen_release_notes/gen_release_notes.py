@@ -24,7 +24,6 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 
 def extract_section(text: str, version: str) -> str:
@@ -83,7 +82,7 @@ def parse_highlights(section: str) -> str:
     return "\n".join(lines).strip()
 
 
-def get_prev_tag(version: str) -> Optional[str]:
+def get_prev_tag(version: str) -> str | None:
     try:
         tags = subprocess.check_output(["git", "tag", "--sort=-version:refname"], text=True).splitlines()
         exclude = {version, f"v{version}"}
@@ -92,7 +91,7 @@ def get_prev_tag(version: str) -> Optional[str]:
         return None
 
 
-def get_contributors(prev_tag: Optional[str]) -> List[str]:
+def get_contributors(prev_tag: str | None) -> list[str]:
     try:
         ref = f"{prev_tag}..HEAD" if prev_tag else "HEAD"
         names = subprocess.check_output(["git", "log", ref, "--format=%aN"], text=True).splitlines()

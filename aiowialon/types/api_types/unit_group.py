@@ -1,12 +1,12 @@
 # pylint: disable=missing-module-docstring,line-too-long,missing-class-docstring
-from typing_extensions import TypedDict, Required, List
+from typing_extensions import TypedDict, Required
 
 
 # unit_group/update_units
 class UnitGroupUpdateUnitsParams(TypedDict):
     itemId: Required[int]
-    units: Required[List[int]]
+    units: Required[list[int]]
 
 
 class UnitGroupUpdateUnitsResponse(TypedDict):
-    u: List[int]
+    u: list[int]

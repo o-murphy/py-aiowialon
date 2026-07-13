@@ -3,11 +3,7 @@ from enum import IntEnum
 from typing_extensions import (
     TypedDict,
     Required,
-    Optional,
     Any,
-    Dict,
-    List,
-    Union,
     Literal,
     NamedTuple,
 )
@@ -34,7 +30,7 @@ class ItemDeleteItemParams(TypedDict):
     itemId: Required[int]
 
 
-ItemDeleteItemResponse = Dict[str, Any]
+ItemDeleteItemResponse = dict[str, Any]
 
 
 # item/update_custom_field
@@ -44,8 +40,8 @@ class ItemUpdateCustomFieldParams(TypedDict, total=False):
     itemId: Required[int]
     id: Required[int]
     callMode: Literal["create", "update", "delete"]
-    n: Optional[str]  # required for create and update
-    v: Optional[str]  # required for create and update
+    n: str | None  # required for create and update
+    v: str | None  # required for create and update
 
 
 class ItemUpdateCustomField(TypedDict):
@@ -56,7 +52,7 @@ class ItemUpdateCustomField(TypedDict):
 
 class ItemUpdateCustomFieldResponse(NamedTuple):
     id: int
-    data: Union[ItemUpdateCustomField, None]
+    data: ItemUpdateCustomField | None
 
 
 # item/update_custom_field
@@ -65,7 +61,7 @@ class ItemUpdateCustomFieldResponse(NamedTuple):
 class ItemUpdateCustomPropertyParams(TypedDict):
     itemId: Required[int]
     name: Required[str]
-    value: Required[Union[str, Literal[""]]]
+    value: Required[str | Literal[""]]
 
 
 class ItemUpdateCustomPropertyResponse(TypedDict):
@@ -202,7 +198,7 @@ class AddLogRecordParams(TypedDict):
     oldValue: Required[str]
 
 
-AddLogRecordResponse = Dict[str, Any]
+AddLogRecordResponse = dict[str, Any]
 
 
 # item/list_backups
@@ -219,7 +215,7 @@ class ItemBackup(TypedDict):
 
 
 class ItemListBackupsResponse(TypedDict):
-    result: List[ItemBackup]
+    result: list[ItemBackup]
 
 
 class ItemTargetMeasurement(IntEnum):
@@ -235,7 +231,7 @@ class ItemUpdateMeasureUnitsParams(TypedDict):
     flags: Required[Incomplete]
 
 
-ItemUpdateMeasureUnitsResponse = Dict[str, Any]
+ItemUpdateMeasureUnitsResponse = dict[str, Any]
 
 
 # item/update_ftp_property
@@ -303,10 +299,10 @@ ItemUpdateProfileFieldResponse = ItemUpdateCustomFieldResponse
 # item/restore_icons
 class ItemRestoreIconsParams(TypedDict):
     resId: Required[int]
-    trailerIcons: Dict[int, str]
-    driverIcons: Dict[int, str]
-    zoneIcons: Dict[int, str]
-    unitIcons: Dict[int, str]
+    trailerIcons: dict[int, str]
+    driverIcons: dict[int, str]
+    zoneIcons: dict[int, str]
+    unitIcons: dict[int, str]
 
 
-ItemRestoreIconsResponse = Dict[str, Any]
+ItemRestoreIconsResponse = dict[str, Any]

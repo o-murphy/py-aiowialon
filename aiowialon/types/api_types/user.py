@@ -1,6 +1,6 @@
 # pylint: disable=missing-module-docstring,line-too-long,missing-class-docstring
 from enum import IntEnum, IntFlag
-from typing_extensions import TypedDict, Required, Optional, Any, Dict, Union, Tuple
+from typing_extensions import TypedDict, Required, Any
 
 Incomplete = Any
 
@@ -25,7 +25,7 @@ class UserVerifyAuthResponse(TypedDict):
 class UserUpdateAuthParamsParams(TypedDict, total=False):
     userId: Required[int]
     type: Required[AddressType]
-    destination: Optional[str]
+    destination: str | None
 
 
 class UserUpdateAuthParamsResponse(TypedDict):
@@ -40,7 +40,7 @@ class UserUpdateItemAccessParams(TypedDict):
     accessMask: Required[Incomplete]
 
 
-UserUpdateItemAccessResponse = Dict[str, Any]
+UserUpdateItemAccessResponse = dict[str, Any]
 
 
 # user/get_items_access&params
@@ -55,7 +55,7 @@ class UserGetItemsAccessParams(TypedDict, total=False):
     userId: Required[int]
     directAccess: Required[bool]
     itemSuperclass: Required[str]
-    flags: Optional[int]
+    flags: int | None
 
 
 class UserGetItemsAccessResponseItem(TypedDict):
@@ -63,7 +63,7 @@ class UserGetItemsAccessResponseItem(TypedDict):
     dacl: int  # direct access level
 
 
-UserGetItemsAccessResponse = Dict[str, Union[int, UserGetItemsAccessResponseItem]]
+UserGetItemsAccessResponse = dict[str, int | UserGetItemsAccessResponseItem]
 
 
 # user/update_hosts_mask
@@ -92,14 +92,12 @@ class UserUpdateUserNotificationParams(TypedDict, total=False):
     itemId: Required[int]  # user ID
     id: Required[int]  # notice ID, required for delete
     callMode: Required[str]  # action: 'create', 'delete'
-    h: Optional[str]  # subject, required for create/update
-    d: Optional[
-        NotificationMessage
-    ]  # message text settings, required for create/update
-    s: Optional[str]  # sender, required for create/update
-    ttl: Optional[
-        int
-    ]  # lifetime (UTC in millisecs from 1 Jan 1970), required for create/update
+    h: str | None  # subject, required for create/update
+    d: NotificationMessage | None  # message text settings, required for create/update
+    s: str | None  # sender, required for create/update
+    ttl: (
+        int | None
+    )  # lifetime (UTC in millisecs from 1 Jan 1970), required for create/update
 
 
 class UserUpdateUserNotificationResponseCreateItem(TypedDict):
@@ -110,8 +108,8 @@ class UserUpdateUserNotificationResponseCreateItem(TypedDict):
     s: str  # sender
 
 
-UserUpdateUserNotificationResponse = Tuple[
-    int, Union[Any, UserUpdateUserNotificationResponseCreateItem]
+UserUpdateUserNotificationResponse = tuple[
+    int, Any | UserUpdateUserNotificationResponseCreateItem
 ]
 
 
@@ -122,7 +120,7 @@ class UserUpdatePasswordParams(TypedDict):
     newPassword: Required[str]  # new password
 
 
-UserUpdatePasswordResponse = Dict[str, Any]
+UserUpdatePasswordResponse = dict[str, Any]
 
 
 # user/send_sms
@@ -131,7 +129,7 @@ class UserSendSmsParams(TypedDict):
     smsText: Required[str]  # SMS message text
 
 
-UserSendSmsResponse = Dict[str, Any]  # empty object if execution is successful
+UserSendSmsResponse = dict[str, Any]  # empty object if execution is successful
 
 
 class UserSendSmsErrorCodes(IntEnum):
@@ -182,9 +180,9 @@ class UserGetLocaleParams(TypedDict):
     userId: Required[int]  # user ID
 
 
-UserGetLocaleResponse = Union[
-    UserGetLocaleResponseChanged, Dict[str, Any]
-]  # either settings or blank object
+UserGetLocaleResponse = (
+    UserGetLocaleResponseChanged | dict[str, Any]
+)  # either settings or blank object
 
 
 # user/get_dst_time
@@ -194,6 +192,6 @@ class UserGetDstTimeParams(TypedDict):
     tz: int  # time zone (optional)
 
 
-UserGetDstTimeResponse = Dict[
+UserGetDstTimeResponse = dict[
     str, int
 ]  # keys are dynamic text, values are UNIX times (1 for DST start, 0 for DST end)

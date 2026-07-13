@@ -1,13 +1,9 @@
 # pylint: disable=missing-module-docstring,line-too-long,missing-class-docstring
 from enum import IntEnum
 from typing_extensions import (
+    Any,
     TypedDict,
     Required,
-    Optional,
-    Any,
-    Dict,
-    List,
-    Union,
     Literal,
 )
 from aiowialon.types import flags
@@ -18,7 +14,7 @@ Incomplete = Any
 # core/logout
 class CoreErrorCode(TypedDict, total=False):
     error: int
-    reason: Optional[str]
+    reason: str | None
 
 
 # core/get_account_data
@@ -35,8 +31,8 @@ class AccountService(TypedDict, total=False):
     type: int
     usage: int
     maxUsage: int
-    cost: Optional[str]
-    interval: Optional[int]
+    cost: str | None
+    interval: int | None
 
 
 class BillingPlan(TypedDict, total=False):
@@ -45,7 +41,7 @@ class BillingPlan(TypedDict, total=False):
     denyBalance: int
     minDaysCounter: int
     historyPeriod: int
-    services: Dict[str, AccountService]
+    services: dict[str, AccountService]
 
 
 class AccountSettings(TypedDict, total=False):
@@ -62,22 +58,22 @@ class CoreGetAccountDataResponse(TypedDict, total=False):
     flags: int
     balance: str
     daysCounter: int
-    services: Optional[Dict[str, AccountService]]  # minimal only
-    settings: Optional[AccountSettings]  # detailed only
-    siteAccess: Optional[Dict[str, str]]  # detailed only
+    services: dict[str, AccountService] | None  # minimal only
+    settings: AccountSettings | None  # detailed only
+    siteAccess: dict[str, str] | None  # detailed only
     dealerRights: int
-    subPlans: List[str]
-    switchTime: Optional[int]  # minimal only
+    subPlans: list[str]
+    switchTime: int | None  # minimal only
 
 
 # core/check_items_billing
 class CoreChechItemsBillingParams(TypedDict):
-    items: Required[List[int]]
+    items: Required[list[int]]
     accessFlags: Required[int]
     serviceName: Required[str]
 
 
-CoreChechItemsBillingResponse = List[int]
+CoreChechItemsBillingResponse = list[int]
 
 
 # core/check_accessors
@@ -87,7 +83,7 @@ class CoreCheckAccessorsAddDact(IntEnum):
 
 
 class CoreCheckAccessorsParams(TypedDict):
-    items: Required[List[int]]
+    items: Required[list[int]]
     flags: Required[CoreCheckAccessorsAddDact]
 
 
@@ -96,7 +92,7 @@ class CoreCheckAccessorsAccessRights(TypedDict, total=False):
     dacl: int
 
 
-CoreCheckAccessorsResponse = Dict[str, Dict[str, CoreCheckAccessorsAccessRights]]
+CoreCheckAccessorsResponse = dict[str, dict[str, CoreCheckAccessorsAccessRights]]
 
 
 # core/create_user
@@ -163,10 +159,10 @@ class CoreCreateRetranslatorConfig(TypedDict, total=False):
     protocol: Required[str]
     server: Required[str]
     port: Required[int]  # for all except NIS
-    auth: Optional[str]
-    ssl: Optional[bool]  # for NIS
+    auth: str | None
+    ssl: bool | None  # for NIS
     debug: Required[bool]
-    v6type: Optional[bool]  # for GRANIT_NAVIGATOR only
+    v6type: bool | None  # for GRANIT_NAVIGATOR only
 
 
 class CoreCreateRetranslatorParams(TypedDict):
@@ -216,8 +212,8 @@ class SearchItemsSpec(TypedDict, total=False):
     propName: Required[Incomplete]
     propValueMask: Required[str]
     sortType: Required[str]
-    propType: Optional[str]
-    or_logic: Optional[bool]
+    propType: str | None
+    or_logic: bool | None
 
 
 class CoreSearchItemsParams(TypedDict):
@@ -234,25 +230,25 @@ class CoreSearchItemsResponse(TypedDict):
     totalItemsCount: int
     indexFrom: int
     indexTo: int
-    items: List[Incomplete]
+    items: list[Incomplete]
 
 
 # core/update_data_flags
 class CoreUpdateDataFlagsSpec(TypedDict, total=False):
     type: Required[Incomplete]
-    data: Required[Union[str, int, List[int]]]
+    data: Required[str | int | list[int]]
     flags: Required[flags.UnitsDataFlag]
     mode: Required[Incomplete]
-    max_items: Optional[int]
+    max_items: int | None
 
 
 class CoreUpdateDataFlagsParams(TypedDict):
-    spec: Required[List[CoreUpdateDataFlagsSpec]]
+    spec: Required[list[CoreUpdateDataFlagsSpec]]
 
 
 class CoreUpdateDataFlagsResponse(TypedDict):
     i: int
-    d: Dict[str, Incomplete]
+    d: dict[str, Incomplete]
     f: int
 
 
@@ -262,26 +258,26 @@ HwCategory = Literal["auto", "tracker", "mobile", "soft"]
 HwFeature = Literal["wifi_pos"]
 
 CoreGetHwTypesFilterType = Literal["name", "id", "type", "feature"]
-CoreGetHwTypesFilter = Union[str, int, List[int], HwCategory, HwFeature]
+CoreGetHwTypesFilter = str | int | list[int] | HwCategory | HwFeature
 
 
 class CoreGetHwTypesParams(TypedDict):
     filterType: Required[CoreGetHwTypesFilterType]
     filterValue: Required[CoreGetHwTypesFilter]
-    includeType: Required[Union[int, bool]]
-    ignoreRename: Required[Union[int, bool]]
+    includeType: Required[int | bool]
+    ignoreRename: Required[int | bool]
 
 
 class CoreHwType(TypedDict, total=False):
     id: int
     uid2: int
     name: str
-    hw_category: Optional[HwCategory]
+    hw_category: HwCategory | None
     tp: int
     up: int
 
 
-CoreGetHwTypesResponse = List[CoreHwType]
+CoreGetHwTypesResponse = list[CoreHwType]
 
 
 # core/get_hw_cmds
@@ -289,20 +285,20 @@ CoreGetHwTypesResponse = List[CoreHwType]
 
 class CoreGetHwCommandsParams(TypedDict, total=False):
     deviceTypeId: Required[int]
-    unitId: Optional[int]
+    unitId: int | None
     template: Required[bool]
-    lang: Optional[Incomplete]
+    lang: Incomplete | None
 
 
-CoreGetHwCommandsList = Dict[Incomplete, List[Incomplete]]
+CoreGetHwCommandsList = dict[Incomplete, list[Incomplete]]
 
 
 class HwCommandsTemplate(TypedDict):
     icon: str
-    props: List[Incomplete]
+    props: list[Incomplete]
 
 
-CoreGetHwCommandsTemplates = Dict[str, HwCommandsTemplate]
+CoreGetHwCommandsTemplates = dict[str, HwCommandsTemplate]
 
 
 # core/reset_password_request
@@ -335,11 +331,11 @@ class CoreBatchParamsInstance(TypedDict):
 
 
 class CoreBatchParams(TypedDict):
-    params: Required[List[CoreBatchParamsInstance]]
+    params: Required[list[CoreBatchParamsInstance]]
     flags: Required[int]
 
 
-CoreBatchResponse = List[CoreErrorCode]
+CoreBatchResponse = list[CoreErrorCode]
 
 
 # core/duplicate
@@ -394,7 +390,7 @@ class CoreCheckUniqueResponse(TypedDict):
 # response is .xlsx file in bytes
 
 CoreExportFileParams = CoreSearchItemsParams  # Incomplete
-CoreExportFileResponse = Union[bytes, None]
+CoreExportFileResponse = bytes | None
 
 
 # core/set_session_property

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.0b2] - 2026-07-13
 
+### Removed
+- Dropped support of python 3.8 and python 3.9
+
+### Changed
+- Updated annotations to match python 3.10 annotations syntax
+
 ## [2.0.0b1] - 2026-05-14
 
 > Major library overhaul: queue-based AVL event dispatch, persistent HTTP session, full test suite, and PEP 561 typing support.
