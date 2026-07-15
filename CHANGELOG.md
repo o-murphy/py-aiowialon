@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-07-15
+
+No changes since 2.0.0b2, marking as static release
+
 ## [2.0.0b2] - 2026-07-13
 
 ### Removed
@@ -174,7 +178,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Build system updated to `setuptools` + `setuptools-scm`.
 
-[Unreleased]: https://github.com/o-murphy/py-aiowialon/compare/v2.0.0b2...HEAD
+[Unreleased]: https://github.com/o-murphy/py-aiowialon/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/o-murphy/py-aiowialon/compare/v2.0.0b2...v2.0.0
 [2.0.0b2]: https://github.com/o-murphy/py-aiowialon/compare/v2.0.0b1...v2.0.0b2
 [2.0.0b1]: https://github.com/o-murphy/py-aiowialon/compare/v1.3.5...v2.0.0b1
 [1.3.5]: https://github.com/o-murphy/py-aiowialon/compare/v1.3.4.post1...v1.3.5
