@@ -81,5 +81,6 @@ dev = [
     "pytest>=9.1.1; python_version >= '3.11'",
     "pytest>=8.3.5; python_version < '3.11'",
     "pytest-asyncio>=0.24.0",
-    "ruff>=0.15.12",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.22",
 ]
