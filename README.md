@@ -7,9 +7,10 @@ https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md
 
 
 # AIO Wialon
-[![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://opensource.org/licenses/MIT)
-[![pypi version](https://img.shields.io/pypi/v/py-aiowialon)](https://pypi.org/project/py-aiowialon/)
-[![Test](https://github.com/o-murphy/py-aiowialon/actions/workflows/test.yml/badge.svg)](https://github.com/o-murphy/py-aiowialon/actions/workflows/test.yml)
+[![license]][license-url]
+[![pypi version]][PyPiUrl]
+[![Test]][test-workflow]
+[![coverage]][CodecovUrl]
 
 `AIO Wialon` is an async Python wrapper for the Wialon Remote API.
 
@@ -460,3 +461,30 @@ logging.basicConfig(level=logging.DEBUG)
 > THE CODE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 
 *Copyright 2023 Yaroshenko Dmytro (https://github.com/o-murphy)*
+
+
+<!-- REUSABLE LINKS -->
+
+[license]:
+https://img.shields.io/github/license/mashape/apistatus.svg
+
+[license-url]:
+https://opensource.org/licenses/MIT
+
+[pypi version]:
+https://img.shields.io/pypi/v/py-aiowialon
+
+[PyPiUrl]:
+https://pypi.org/project/py-aiowialon/
+
+[Test]:
+https://github.com/o-murphy/py-aiowialon/actions/workflows/test.yml/badge.svg
+
+[test-workflow]:
+https://github.com/o-murphy/py-aiowialon/actions/workflows/test.yml
+
+[coverage]:
+https://codecov.io/gh/o-murphy/py-aiowialon/graph/badge.svg
+
+[CodecovUrl]:
+https://codecov.io/gh/o-murphy/py-aiowialon
