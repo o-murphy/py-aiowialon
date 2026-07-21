@@ -5,6 +5,14 @@ default_language_version:
 repos:
   - repo: local
     hooks:
+      - id: uv-lock
+        name: uv lock check
+        entry: uv
+        args: ["lock", "--check"]
+        language: system
+        pass_filenames: false
+        files: '^(pyproject\.toml|uv\.lock)$'
+
       - id: uv-sync
         name: uv sync before hooks
         entry: uv
@@ -35,8 +43,3 @@ repos:
         language: system
         pass_filenames: false
         files: '\.py$'
-
-  - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.29
-    hooks:
-      - id: uv-lock
