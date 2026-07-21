@@ -38,7 +38,7 @@ jobs:
         run: uv run pytest tests/unit/ --junitxml=test-results/unit.xml --cov=aiowialon --cov-report=xml
 
       - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.14'
+        if: matrix.python-version == '3.14' && github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
