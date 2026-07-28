@@ -108,7 +108,7 @@ class AvlEventHandler:
                     "Exception happened in %s",
                     self._callback.__name__,
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.exception(
                     "Unknown exception happened in %s: %s",
                     self._callback.__name__,
@@ -161,7 +161,7 @@ class AvlEventHandler:
 __all__ = (
     "AvlEvent",
     "AvlEventCallback",
-    "AvlEventFilter",
     "AvlEventData",
+    "AvlEventFilter",
     "AvlEventHandler",
 )

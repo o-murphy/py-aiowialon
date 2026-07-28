@@ -1,5 +1,6 @@
 # pylint: disable=missing-module-docstring,line-too-long,missing-class-docstring
-from typing import TypedDict, Any
+from typing import Any, TypedDict
+
 from aiowialon.utils.compat import StrEnum
 
 

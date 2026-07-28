@@ -1,6 +1,7 @@
 """Enumerators of Wialon ACL Flags, Request and Response Data Flags."""
 
-from enum import IntFlag, IntEnum
+from enum import IntEnum, IntFlag
+
 from aiowialon.utils.compat import StrEnum
 
 # pylint: disable=line-too-long,missing-class-docstring

@@ -1,8 +1,9 @@
-from _typeshed import Incomplete
 from abc import ABC
-from aiowialon import Wialon as Wialon
+
+from _typeshed import Incomplete
 from typing_extensions import Any, Unpack
 
+from aiowialon import Wialon as Wialon
 from aiowialon.types.api_types import core
 
 class WialonService(ABC):

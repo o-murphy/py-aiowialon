@@ -1,23 +1,20 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """Async Wialon Remote API client implementation"""
 
 import asyncio
-from collections.abc import Callable, Coroutine
 import json
 import warnings
+from collections.abc import Callable, Coroutine
 from contextlib import suppress
 from functools import wraps
+from typing import Literal
 from urllib.parse import urljoin
 
 import aiohttp
 from aiolimiter import AsyncLimiter
-
 from typing_extensions import (
-    Unpack,
     Any,
-    Literal,
+    Self,
+    Unpack,
 )
 
 from aiowialon.exceptions import (
@@ -25,23 +22,22 @@ from aiowialon.exceptions import (
     WialonRequestLimitExceededError,
     WialonWarning,
 )
-from aiowialon.logger import logger, aiohttp_trace_config
+from aiowialon.logger import aiohttp_trace_config, logger
 from aiowialon.types import (
-    AvlEventHandler,
-    AvlEventFilter,
     AvlEvent,
     AvlEventCallback,
-    ClientLogoutCallback,
-)
-from aiowialon.types import (
-    ClientLoginParams,
+    AvlEventFilter,
+    AvlEventHandler,
     ClientLoginCallback,
-    flags,
+    ClientLoginParams,
+    ClientLogoutCallback,
     MultipartField,
+    flags,
 )
-from aiowialon.types.api_types import core, other, token as token_params
-from aiowialon.utils.async_lock import ExclusiveAsyncLock
+from aiowialon.types.api_types import core, other
+from aiowialon.types.api_types import token as token_params
 from aiowialon.utils import convention
+from aiowialon.utils.async_lock import ExclusiveAsyncLock
 from aiowialon.validators import WialonCallRespValidator
 
 
@@ -102,10 +98,10 @@ class Wialon:
             )
         return self.__http_session
 
-    async def __aenter__(self) -> "Wialon":
+    async def __aenter__(self) -> Self:
         return self
 
-    async def __aexit__(self, *_: Any) -> None:
+    async def __aexit__(self, *_: object) -> None:
         await self._close_http_session()
 
     async def _close_http_session(self) -> None:
@@ -256,19 +252,19 @@ class Wialon:
     def _process_event_handlers(self, event: AvlEvent) -> None:
         """Process event handlers for current item"""
 
-        for _, handler in self.__avl_event_handlers.items():
+        for handler in self.__avl_event_handlers.values():
             if handler(event):
                 break
 
     def _cleanup_event_handlers(self) -> None:
         """Cleanup event handlers"""
 
-        for _, handler in self.__avl_event_handlers.items():
+        for handler in self.__avl_event_handlers.values():
             handler.cleanup()
 
     async def start_polling(
         self,
-        timeout: int | float = 2,
+        timeout: float = 2,
         logout_finally: bool = True,
         **params: Unpack[ClientLoginParams],
     ) -> None:
@@ -358,7 +354,7 @@ class Wialon:
             await self._close_http_session()
             return session_logout
 
-    async def _polling(self, timeout: int | float = 2) -> None:
+    async def _polling(self, timeout: float = 2) -> None:
         """Internal avl event polling loop"""
 
         while self._sid:
@@ -447,9 +443,7 @@ class Wialon:
     def _is_call(cls, coroutine: Coroutine[Any, Any, Any]) -> bool:
         """Internally check if coroutine is the 'Wialon.call()' method"""
 
-        if coroutine.__qualname__ == cls.call.__qualname__:
-            return True
-        return False
+        return coroutine.__qualname__ == cls.call.__qualname__
 
     def __getattr__(self, action_name: str) -> Any:
         """
@@ -473,26 +467,23 @@ class Wialon:
 
         if not action_name:
             action_name = "undefined_action"
-        async with self.__limiter:
-            async with self.__semaphore:
-                try:
-                    async with self._http_session.post(
-                        url=url, data=payload, timeout=self._timeout
-                    ) as response:
-                        await WialonCallRespValidator.validate_headers(response)
+        async with self.__limiter, self.__semaphore:
+            try:
+                async with self._http_session.post(
+                    url=url, data=payload, timeout=self._timeout
+                ) as response:
+                    await WialonCallRespValidator.validate_headers(response)
 
-                        if await WialonCallRespValidator.has_attachment(response):
-                            return await response.content.read()
+                    if await WialonCallRespValidator.has_attachment(response):
+                        return await response.content.read()
 
-                        response_data = await response.read()
-                        result = json.loads(response_data)
-                        await WialonCallRespValidator.validate_result(
-                            action_name, result
-                        )
-                        return result
-                except (aiohttp.ClientError, WialonError) as e:
-                    logger.exception(e)
-                    raise
+                    response_data = await response.read()
+                    result = json.loads(response_data)
+                    await WialonCallRespValidator.validate_result(action_name, result)
+                    return result
+            except (aiohttp.ClientError, WialonError) as e:
+                logger.exception(e)
+                raise
 
     async def wait(
         self, call: Coroutine[Any, Any, Any], timeout: float | None = None

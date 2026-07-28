@@ -1,11 +1,13 @@
 # pylint: disable=missing-module-docstring,line-too-long,missing-class-docstring
 from enum import IntEnum
+from typing import Literal
+
 from typing_extensions import (
     Any,
-    TypedDict,
     Required,
-    Literal,
+    TypedDict,
 )
+
 from aiowialon.types import flags
 
 Incomplete = Any

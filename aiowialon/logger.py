@@ -34,6 +34,6 @@ aiohttp_trace_config.on_request_end.append(on_request_end)
 aiohttp_trace_config.on_request_exception.append(on_request_exception)
 
 __all__ = (
-    "logger",
     "aiohttp_trace_config",
+    "logger",
 )
