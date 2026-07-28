@@ -4,7 +4,8 @@ and session event callbacks handlers of aio wialon.Wialon client"""
 from collections.abc import Awaitable, Callable
 from typing import TypedDict
 
-from aiowialon.types.api_types import core, token as token_params
+from aiowialon.types.api_types import core
+from aiowialon.types.api_types import token as token_params
 
 
 class ClientLoginParams(TypedDict, total=False):
@@ -23,4 +24,4 @@ class ClientLoginParams(TypedDict, total=False):
 ClientLoginCallback = Callable[[token_params.TokenLoginResponse], Awaitable[None]]
 ClientLogoutCallback = Callable[[core.CoreErrorCode], Awaitable[None]]
 
-__all__ = ("ClientLoginParams", "ClientLoginCallback", "ClientLogoutCallback")
+__all__ = ("ClientLoginCallback", "ClientLoginParams", "ClientLogoutCallback")

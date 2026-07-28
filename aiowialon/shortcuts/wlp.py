@@ -5,7 +5,7 @@ from typing import Any
 
 from aiowialon.api import Wialon
 from aiowialon.exceptions import WialonInvalidInput
-from aiowialon.types import flags, MultipartField
+from aiowialon.types import MultipartField, flags
 
 
 class WLP:

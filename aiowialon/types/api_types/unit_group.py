@@ -1,5 +1,5 @@
 # pylint: disable=missing-module-docstring,line-too-long,missing-class-docstring
-from typing_extensions import TypedDict, Required
+from typing_extensions import Required, TypedDict
 
 
 # unit_group/update_units

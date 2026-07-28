@@ -1,6 +1,7 @@
 # pylint: disable=missing-module-docstring,line-too-long,missing-class-docstring
 from enum import IntEnum
-from typing_extensions import TypedDict, Required, Any
+
+from typing_extensions import Any, Required, TypedDict
 
 Incomplete = Any
 

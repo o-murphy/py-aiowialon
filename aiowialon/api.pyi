@@ -1,4 +1,7 @@
 from collections.abc import Callable, Coroutine
+from typing import Literal
+
+from typing_extensions import Any, Unpack
 
 from aiowialon.types import (
     AvlEventCallback,
@@ -12,14 +15,15 @@ from aiowialon.types import (
 from aiowialon.types.api_types import (
     core,
     item,
-    user,
     messages,
-    unit_group,
-    retranslator,
-    token as token_params,
     other,
+    retranslator,
+    unit_group,
+    user,
 )
-from typing_extensions import Unpack, Any, Literal
+from aiowialon.types.api_types import (
+    token as token_params,
+)
 
 __all__ = ("Wialon",)
 
@@ -55,7 +59,7 @@ class Wialon:
     def remove_avl_event_handler(self, callback: str | AvlEventCallback): ...
     async def start_polling(
         self,
-        timeout: int | float = 2,
+        timeout: float = 2,
         logout_finally: bool = True,
         **params: Unpack[ClientLoginParams],
     ) -> None: ...

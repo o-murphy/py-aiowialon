@@ -1,10 +1,10 @@
 """Default validator of responses to Wialon Remote API"""
 
 import warnings
+from typing import Any
 
 import aiohttp
 
-from typing import Any
 from aiowialon.exceptions import (
     WIALON_EXCEPTIONS,
     WialonError,
@@ -63,21 +63,19 @@ class WialonCallRespValidator:
         action and error code,
         Recursively validates 'core_batch request' results
         """
-        if isinstance(result, dict):
-            if "error" in result:
-                await WialonCallRespValidator.raise_wialon_error(action_name, result)
-        if action_name == "core_batch":
-            if isinstance(result, list):
-                exceptions = []
-                for i, item in enumerate(result):
-                    try:
-                        await WialonCallRespValidator.validate_result(
-                            f"core_batch[{i}]", item
-                        )
-                    except WialonError as err:
-                        exceptions.append(err)
-                if len(exceptions) > 0:
-                    raise WialonInvalidResult(exceptions, "core_batch", result)
+        if isinstance(result, dict) and "error" in result:
+            await WialonCallRespValidator.raise_wialon_error(action_name, result)
+        if action_name == "core_batch" and isinstance(result, list):
+            exceptions = []
+            for i, item in enumerate(result):
+                try:
+                    await WialonCallRespValidator.validate_result(
+                        f"core_batch[{i}]", item
+                    )
+                except WialonError as err:
+                    exceptions.append(err)
+            if len(exceptions) > 0:
+                raise WialonInvalidResult(exceptions, "core_batch", result)
 
     @staticmethod
     async def has_attachment(response: aiohttp.ClientResponse) -> bool:
@@ -92,12 +90,10 @@ class WialonCallRespValidator:
             # if match:
             #     return True
             return True
-        if (
+        return (
             "application/octet-stream" in content_type
             or "multipart/form-data" in content_type
-        ):
-            return True
-        return False
+        )
 
 
 __all__ = ("WialonCallRespValidator",)

@@ -1,6 +1,6 @@
-from collections.abc import Coroutine
 import warnings
 from abc import ABC
+from collections.abc import Coroutine
 
 from typing_extensions import Any, Unpack
 

@@ -1,6 +1,6 @@
 """Data types for multipart Wialon Remote API calls"""
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 

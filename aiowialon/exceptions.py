@@ -1,6 +1,6 @@
 """Definitions of Wialon Remote API exceptions."""
 
-from typing import Any, Union
+from typing import Any, ClassVar, Union
 
 # pylint: skip-file
 
@@ -14,7 +14,7 @@ class WialonError(Exception):
     related error or for a Wialon specific reason.
     """
 
-    errors = {
+    errors: ClassVar[dict[int, str]] = {
         1: "Invalid session",
         2: "Invalid service",
         3: "Invalid result",
@@ -67,9 +67,10 @@ class WialonError(Exception):
         if self.reason is not None:
             if isinstance(self.reason, (WialonError, str)):
                 reason = f": {self.reason}"
-            elif isinstance(self.reason, (list, tuple)):
-                if any(isinstance(element, WialonError) for element in self.reason):
-                    reason = ": use 'WialonError.reason' method, to get details"
+            elif isinstance(self.reason, (list, tuple)) and any(
+                isinstance(element, WialonError) for element in self.reason
+            ):
+                reason = ": use 'WialonError.reason' method, to get details"
         return f"{explanation} {action_name}({self.code}){reason}"
 
     def __repr__(self):
@@ -217,7 +218,7 @@ class WialonDuplicateItemError(WialonError, LookupError):
 
 
 class WialonRequestLimitExceededError(WialonError, RuntimeError):
-    _reasons = {
+    _reasons: ClassVar[dict[int, str]] = {
         1: "Only one request is allowed at the moment",
         2: "LIMIT api_concurrent",
         3: "LAYERS_MAX_COUNT",
