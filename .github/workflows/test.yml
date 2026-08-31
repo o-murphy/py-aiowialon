@@ -13,6 +13,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     strategy:
       matrix:
         python-version: ["3.10", "3.14"]
@@ -41,7 +43,7 @@ jobs:
         if: matrix.python-version == '3.14' && github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@v7
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
           files: ./coverage.xml
           fail_ci_if_error: true
 
