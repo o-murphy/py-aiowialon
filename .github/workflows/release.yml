@@ -32,33 +32,7 @@ jobs:
   test:
     uses: ./.github/workflows/test.yml
 
-  # ── 2. Create a draft GitHub Release (tag pushes only) ───────────────────
-  create-release:
-    needs: test
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Generate release notes
-        id: notes
-        uses: ./.github/actions/gen_release_notes
-        with:
-          version: ${{ github.ref_name }}
-
-      - name: Create draft GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "${{ github.ref_name }}" \
-            --title "py-aiowialon ${{ github.ref_name }}" \
-            --notes-file "${{ steps.notes.outputs.notes_file }}" \
-            --draft \
-            --prerelease=${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') }}
-
-  # ── 3. Build wheel + sdist ────────────────────────────────────────────────
+  # ── 2. Build wheel + sdist ────────────────────────────────────────────────
   build:
     needs: test
     runs-on: ubuntu-latest
@@ -89,14 +63,9 @@ jobs:
           path: dist/
           retention-days: 14
 
-  # ── 4. Publish + undraft release ─────────────────────────────────────────
+  # ── 3. Create release + publish ──────────────────────────────────────────
   publish:
-    needs: [build, create-release]
-    # run when build succeeded AND create-release either succeeded or was skipped
-    if: |
-      always() &&
-      needs.build.result == 'success' &&
-      (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
+    needs: build
     runs-on: ubuntu-latest
     environment: >-
       ${{ github.event_name == 'push' && 'pypi' ||
@@ -108,6 +77,25 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Generate release notes
+        id: notes
+        if: github.event_name == 'push'
+        uses: ./.github/actions/gen_release_notes
+        with:
+          version: ${{ github.ref_name }}
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "py-aiowialon ${{ github.ref_name }}" \
+            --notes-file "${{ steps.notes.outputs.notes_file }}" \
+            --prerelease=${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') }}
 
       - name: Download dist artifacts
         uses: actions/download-artifact@v8
@@ -136,9 +124,3 @@ jobs:
             --trusted-publishing always \
             --publish-url https://test.pypi.org/legacy/ \
             dist/*
-
-      - name: Publish GitHub Release
-        if: github.event_name == 'push'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release edit "${{ github.ref_name }}" --draft=false
