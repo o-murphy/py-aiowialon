@@ -6,9 +6,9 @@ repos:
   - repo: local
     hooks:
       - id: uv-lock
-        name: uv lock upgrade
+        name: uv lock check
         entry: uv
-        args: ["lock", "--upgrade"]
+        args: ["lock", "--check"]
         language: system
         pass_filenames: false
         files: '^(pyproject\.toml|uv\.lock)$'
